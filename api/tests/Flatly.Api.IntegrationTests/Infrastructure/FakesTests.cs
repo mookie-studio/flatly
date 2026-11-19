@@ -68,8 +68,8 @@ public sealed class FakesTests(PostgresContainer postgres)
 
         Assert.True(result.Succeeded);
         Assert.Equal(FakeExternalAuthenticationHandler.SchemeName, result.Ticket!.AuthenticationScheme);
-        Assert.Equal(Ana.Subject, result.Principal!.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        Assert.Equal(Ana.Email, result.Principal.FindFirst(ClaimTypes.Email)!.Value);
+        // The principal is the Flatly account, found or created the same way as the Google sign-in does it.
+        Assert.True(Guid.TryParse(result.Principal!.FindFirst(ClaimTypes.NameIdentifier)!.Value, out _));
         Assert.Equal(Ana.Name, result.Principal.FindFirst(ClaimTypes.Name)!.Value);
     }
 

@@ -46,11 +46,13 @@ public sealed class ProfileTests(PostgresContainer postgres)
     }
 
     [SkippableFact]
-    public async Task GetForAnAccountThatWasNeverCreatedIsUnauthorized()
+    public async Task GetWithATicketTheProviderNeverIssuedIsUnauthorized()
     {
+        // A ticket the fake provider never issued is not a sign-in, so the request is anonymous and gets 401.
+        // (A ticket issued by SignIn creates the account on first use, so it cannot stand for an unknown account.)
         await using var factory = await CreateFactoryAsync();
-        var ghost = new FakeExternalAccount(ExternalProviders.Google, NewSubject(), "ghost@example.com");
-        using var client = Client(factory, ghost);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(FakeExternalAuthenticationHandler.TicketHeader, NewSubject());
 
         var response = await client.GetAsync(ProfileUrl);
 

@@ -34,6 +34,10 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
     {
         builder.UseEnvironment("Development");
         builder.UseSetting($"ConnectionStrings:{DatabaseRegistration.ConnectionName}", connectionString);
+        // Google is configured, so the sign-in endpoint can redirect to it. The provider itself is never called in tests.
+        builder.UseSetting("Authentication:Google:ClientId", "test-google-client");
+        builder.UseSetting("Authentication:Google:ClientSecret", "test-google-secret");
+        builder.UseSetting("Web:Origin", "https://web.test");
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<TimeProvider>();
@@ -48,8 +52,10 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
                 .AddScheme<AuthenticationSchemeOptions, FakeExternalAuthenticationHandler>(
                     FakeExternalAuthenticationHandler.SchemeName,
                     _ => { });
-            // The API has no authentication middleware yet (the cookie session is a later task), so the test host adds it.
-            services.AddTransient<IStartupFilter, UseAuthenticationStartupFilter>();
+            // Requests are authenticated by the fake ticket instead of the session cookie, so tests need no Google login.
+            // Everything else (the fallback policy, AllowAnonymous, antiforgery) is the production configuration.
+            services.PostConfigure<AuthenticationOptions>(options =>
+                options.DefaultScheme = FakeExternalAuthenticationHandler.SchemeName);
         });
     }
 
@@ -63,16 +69,4 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
         client.DefaultRequestHeaders.Add(FakeExternalAuthenticationHandler.TicketHeader, ExternalSignIn.SignIn(account));
         return client;
     }
-}
-
-/// <summary>Adds the authentication middleware to the test host's pipeline, before the API's own middleware.</summary>
-internal sealed class UseAuthenticationStartupFilter : IStartupFilter
-{
-    /// <inheritdoc />
-    public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) =>
-        app =>
-        {
-            app.UseAuthentication();
-            next(app);
-        };
 }
