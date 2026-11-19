@@ -28,3 +28,11 @@ export const routes: RouteObject[] = [
 export const createRouter = () => createBrowserRouter(routes)
 export const createTestRouter = (path: string) =>
   createMemoryRouter(routes, { initialEntries: [path] })
+
+/** Login URL that returns the visitor to `location` after signing in. */
+export function loginHref(location: { pathname: string; search: string; hash: string }): string {
+  const params = new URLSearchParams({
+    redirect: location.pathname + location.search + location.hash,
+  })
+  return `/login?${params.toString()}`
+}

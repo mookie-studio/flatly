@@ -1,0 +1,105 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Flatly.Api | v1",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5080/"
+    }
+  ],
+  "paths": {
+    "/api/v1/platform/validation-sample": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Sample endpoint showing field-keyed validation errors (400 ProblemDetails).",
+        "operationId": "ValidationSample",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidationSampleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationSampleRequest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/clock-sample": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Sample endpoint returning the time from the injectable clock.",
+        "operationId": "ClockSample",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClockSampleResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClockSampleResponse": {
+        "required": [
+          "utcNow"
+        ],
+        "type": "object",
+        "properties": {
+          "utcNow": {
+            "type": "string",
+            "description": "The current time, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "Response of the clock sample: the current instant as the application's clock reports it."
+      },
+      "ValidationSampleRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required, at most 50 characters."
+          }
+        },
+        "description": "Request of the sample endpoint that demonstrates field-keyed validation errors."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Platform"
+    }
+  ]
+}

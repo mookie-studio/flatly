@@ -10,11 +10,17 @@
     "typecheck": "tsc -b --noEmit",
     "lint": "eslint .",
     "format": "prettier --check .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "api:contract": "node scripts/fetch-openapi.mjs",
+    "api:types": "openapi-typescript contracts/flatly-api.json -o src/api/schema.d.ts",
+    "api:generate": "npm run api:contract && npm run api:types",
+    "api:check": "npm run api:types && git diff --exit-code src/api/schema.d.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "5.106.0",
     "i18next": "26.7.1",
     "i18next-browser-languagedetector": "8.3.0",
+    "openapi-fetch": "0.17.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-i18next": "17.1.12",
@@ -34,6 +40,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",
     "jsdom": "^31.0.1",
+    "msw": "3.0.3",
+    "openapi-typescript": "7.13.0",
     "prettier": "^3.10.1",
     "tailwindcss": "^4.3.5",
     "typescript": "^5.9.3",
