@@ -46,6 +46,9 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
                 .AddScheme<AuthenticationSchemeOptions, FakeExternalAuthenticationHandler>(
                     FakeExternalAuthenticationHandler.SchemeName,
                     _ => { });
+            // The fake provider is the default scheme, so requests that carry a ticket are signed in.
+            services.PostConfigure<AuthenticationOptions>(options =>
+                options.DefaultScheme = FakeExternalAuthenticationHandler.SchemeName);
         });
     }
 }

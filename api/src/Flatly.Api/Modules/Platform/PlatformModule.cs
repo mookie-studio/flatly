@@ -26,6 +26,10 @@ public static class PlatformModule
             })
             .AddEntityFrameworkStores<FlatlyDbContext>();
         services.AddScoped<ExternalAccountService>();
+        // Authentication services without a default scheme: the sign-in task configures the scheme that signs members in.
+        services.AddAuthentication();
+        services.AddScoped<CurrentMemberResolver>();
+        services.AddSingleton<IRequestValidator<UpdateProfileRequest>, UpdateProfileRequestValidator>();
         // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IRequestValidator<ValidationSampleRequest>, ValidationSampleRequestValidator>();
@@ -38,7 +42,8 @@ public static class PlatformModule
         app.MapGroup(RoutePrefix)
             .WithTags("Platform")
             .MapValidationSample()
-            .MapClockSample();
+            .MapClockSample()
+            .MapProfile();
         return app;
     }
 }

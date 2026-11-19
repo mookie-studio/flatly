@@ -38,6 +38,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Returns the signed-in member's profile. */
+        get: operations["GetProfile"];
+        /** Replaces the signed-in member's profile: name, avatar, language and time zone. */
+        put: operations["UpdateProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -49,6 +67,27 @@ export interface components {
              * @description The current time, in UTC.
              */
             utcNow: string;
+        };
+        /** @description The profile of the signed-in member. */
+        ProfileResponse: {
+            /** @description Name shown to the other members of the flat. */
+            displayName: string;
+            /** @description Absolute https URL of the avatar, or null when there is none. */
+            avatarUrl: null | string;
+            /** @description Interface language: `es` or `en`. */
+            preferredLanguage: string;
+            /** @description IANA time zone identifier, for example `Europe/Madrid`. */
+            timeZoneId: string;
+        };
+        /**
+         * @description The full profile sent to `PUT profile`. Every field replaces the stored value, so an absent or empty
+         *     `avatarUrl` removes the avatar.
+         */
+        UpdateProfileRequest: {
+            displayName: null | string;
+            avatarUrl: null | string;
+            preferredLanguage: null | string;
+            timeZoneId: null | string;
         };
         /** @description Request of the sample endpoint that demonstrates field-keyed validation errors. */
         ValidationSampleRequest: {
@@ -104,6 +143,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ClockSampleResponse"];
+                };
+            };
+        };
+    };
+    GetProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileResponse"];
+                };
+            };
+        };
+    };
+    UpdateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileResponse"];
                 };
             };
         };
