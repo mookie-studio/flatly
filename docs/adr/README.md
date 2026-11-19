@@ -11,3 +11,4 @@ To add a record, copy [0000-template.md](0000-template.md) to the next free numb
 | [0001](0001-stack-and-deployment.md) | Stack and deployment | Accepted |
 | [0002](0002-per-flat-multi-tenancy.md) | Per-flat multi-tenancy | Accepted |
 | [0003](0003-identity-with-external-providers.md) | Identity with external providers | Accepted |
+| [0004](0004-web-styling-and-theming.md) | Web styling, component library and theming | Accepted |

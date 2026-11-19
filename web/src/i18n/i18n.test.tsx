@@ -3,13 +3,16 @@ import { RouterProvider } from 'react-router/dom'
 import { AuthContext } from '@/auth/auth-context'
 import { i18n, LANGUAGE_STORAGE_KEY } from '@/i18n'
 import { createTestRouter } from '@/router'
+import { ThemeProvider } from '@/theme/ThemeProvider'
 
 function renderLogin() {
   const router = createTestRouter('/login')
   render(
-    <AuthContext.Provider value={{ status: 'anonymous' }}>
-      <RouterProvider router={router} />
-    </AuthContext.Provider>,
+    <ThemeProvider>
+      <AuthContext.Provider value={{ status: 'anonymous' }}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>
+    </ThemeProvider>,
   )
 }
 
