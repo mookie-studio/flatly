@@ -48,10 +48,21 @@ describe('routing', () => {
         ]),
       ),
     )
+    server.use(
+      http.get(`${config.apiUrl}/api/v1/flats/f1`, () =>
+        HttpResponse.json({
+          id: 'f1',
+          name: 'Calle Mayor 12',
+          createdAt: '2026-11-19T20:00:00Z',
+          role: 'Admin',
+        }),
+      ),
+      http.get(`${config.apiUrl}/api/v1/flats/f1/members`, () => HttpResponse.json([])),
+    )
     const router = renderAt('/', { status: 'authenticated', userId: 'user-1' })
 
     expect(await screen.findByRole('heading', { name: 'Calle Mayor 12' })).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/')
+    expect(router.state.location.pathname).toBe('/f/f1')
   })
 
   it('renders the public login page without a session and without redirecting', async () => {

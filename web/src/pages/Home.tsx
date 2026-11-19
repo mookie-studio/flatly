@@ -1,7 +1,10 @@
+import { Navigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMyFlats } from '@/api/flats'
+import { flatHomePath } from '@/components/layout/navigation'
 import { Onboarding } from './Onboarding'
 
+/** Entry point at `/`: sends a member to their flat, or offers onboarding when they have none. */
 export function Home() {
   const { t } = useTranslation('home')
   const flats = useMyFlats()
@@ -24,10 +27,5 @@ export function Home() {
     return <Onboarding />
   }
 
-  return (
-    <section className="flex flex-col gap-1">
-      <p className="text-sm text-ink-muted">{t('title')}</p>
-      <h1 className="text-2xl font-semibold text-ink">{flat.name}</h1>
-    </section>
-  )
+  return <Navigate to={flatHomePath(flat.id)} replace />
 }
