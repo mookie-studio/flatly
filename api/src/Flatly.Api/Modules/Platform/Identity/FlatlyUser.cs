@@ -22,6 +22,12 @@ public sealed class FlatlyUser : IdentityUser<Guid>
 
     /// <summary>When the account was created, in UTC.</summary>
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// When the member deleted the account, in UTC, or null while it is active. A deleted account keeps its row, so the
+    /// memberships that point at it stay valid as history; its personal data is removed (see <c>AccountEndpoints</c>).
+    /// </summary>
+    public DateTimeOffset? DeletedAt { get; set; }
 }
 
 /// <summary>The interface languages Flatly ships with.</summary>

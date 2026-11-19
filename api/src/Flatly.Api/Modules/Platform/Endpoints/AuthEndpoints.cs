@@ -54,6 +54,8 @@ public static class AuthEndpoints
                 var user = Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
                     ? await users.FindByIdAsync(id.ToString("D"))
                     : null;
+                // A deleted account has no session, even when an old cookie still arrives.
+                user = user is { DeletedAt: null } ? user : null;
                 return user is null
                     ? Results.Unauthorized()
                     : TypedResults.Ok(new SessionResponse(user.Id, user.DisplayName, user.AvatarUrl, user.PreferredLanguage, user.TimeZoneId));

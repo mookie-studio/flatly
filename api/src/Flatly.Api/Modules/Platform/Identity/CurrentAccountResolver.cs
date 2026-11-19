@@ -25,6 +25,8 @@ public sealed class CurrentAccountResolver(UserManager<FlatlyUser> users)
             return null;
         }
 
-        return await users.FindByIdAsync(id.ToString("D"));
+        // A deleted account is treated as missing, so its old session cookie stops working at once.
+        var account = await users.FindByIdAsync(id.ToString("D"));
+        return account is { DeletedAt: null } ? account : null;
     }
 }
