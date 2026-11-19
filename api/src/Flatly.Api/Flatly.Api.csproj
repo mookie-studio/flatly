@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <!-- Only framework references for now. ASP.NET Core ships ProblemDetails; OpenAPI is a package. EF Core, Npgsql and Aspire arrive with their own tasks. -->
+  <!-- ASP.NET Core ships ProblemDetails; OpenAPI is a package. EF Core and Npgsql arrive with their own tasks. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Flatly.ServiceDefaults\Flatly.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

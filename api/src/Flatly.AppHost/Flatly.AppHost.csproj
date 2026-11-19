@@ -1,0 +1,14 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
+
+  <!-- Local development only: starts the API and PostgreSQL with one command. Production runs on Azure App Service, not Aspire. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.5" />
+    <ProjectReference Include="..\Flatly.Api\Flatly.Api.csproj" />
+  </ItemGroup>
+
+</Project>
