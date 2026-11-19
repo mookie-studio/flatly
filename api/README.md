@@ -113,6 +113,15 @@ Each module is a static class `<Name>Module` with three members:
 
 The OpenAPI document is generated from the endpoints, and the frontend generates its typed client from it. Every endpoint under `/api/` must call `.WithName("...")` with a unique name, because that name becomes the `operationId`. Renaming an endpoint changes its operation id, which breaks the generated client, so rename one only together with the client that uses it. `Documentation/OpenApiSetup.cs` holds the registration, and `Documentation/OpenApiSetupTests.cs` fails when two endpoints share a name.
 
+## Email
+
+Notifications send email through `IEmailSender` (`Modules/Platform/Email`). Features depend on the interface, never on a provider, and tests replace it with `FakeEmailSender`.
+
+- **Local development**: the AppHost starts Mailpit, and the API sends through SMTP to it. Open Mailpit's web UI from the Aspire dashboard to read the messages. Nothing leaves the machine.
+- **Deployment**: `Email__Provider=Resend`, with the sender domain verified in Resend. The API key is a secret: set `Email__Resend__ApiKey` in App Service settings, never in the repository.
+- **Settings** (section `Email`): `Provider` (`Smtp` or `Resend`), `FromAddress`, `FromName`, `Smtp:Host`, `Smtp:Port`, `Smtp:EnableSsl`, `Smtp:UserName`, `Smtp:Password`, `Resend:ApiKey`, `Resend:BaseUrl`. A missing sender address, an unknown provider or a missing Resend key stops the API at startup.
+- **Templates**: `EmailTemplates.Notification` renders a notification in Spanish or English from the member's `preferred_language`. Unknown or missing languages fall back to Spanish.
+
 ## Errors and validation
 
 Every error answers `application/problem+json` (RFC 9457 ProblemDetails):
