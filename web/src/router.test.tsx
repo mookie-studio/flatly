@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { RouterProvider } from 'react-router/dom'
 import { AuthContext, type AuthState } from './auth/auth-context'
@@ -7,11 +8,13 @@ import { ThemeProvider } from './theme/ThemeProvider'
 function renderAt(path: string, auth: AuthState) {
   const router = createTestRouter(path)
   render(
-    <ThemeProvider>
-      <AuthContext.Provider value={auth}>
-        <RouterProvider router={router} />
-      </AuthContext.Provider>
-    </ThemeProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <ThemeProvider>
+        <AuthContext.Provider value={auth}>
+          <RouterProvider router={router} />
+        </AuthContext.Provider>
+      </ThemeProvider>
+    </QueryClientProvider>,
   )
   return router
 }

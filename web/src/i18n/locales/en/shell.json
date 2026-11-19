@@ -9,5 +9,9 @@
   "nav": {
     "primary": "Primary",
     "home": "Home"
+  },
+  "signOut": {
+    "action": "Sign out",
+    "error": "We could not sign you out. Try again."
   }
 }
