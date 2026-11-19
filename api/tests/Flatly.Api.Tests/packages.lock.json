@@ -272,6 +272,11 @@
           "Polly.Core": "8.4.2"
         }
       },
+      "Scalar.AspNetCore": {
+        "type": "Transitive",
+        "resolved": "2.12.0",
+        "contentHash": "5M4hflIFBqzkUIrfHEgan3noUYH+DDilUR2s3bAJZ7z0n2WkdIuBBOS7RYLNNBgmQu+V+ysvccnvVVRrShrQQQ=="
+      },
       "xunit.abstractions": {
         "type": "Transitive",
         "resolved": "2.0.3",
@@ -320,7 +325,8 @@
           "Microsoft.AspNetCore.OpenApi": "[10.0.15, )",
           "Microsoft.EntityFrameworkCore": "[10.0.15, )",
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.15, )",
-          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )"
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "[10.0.3, )",
+          "Scalar.AspNetCore": "[2.12.0, )"
         }
       },
       "flatly.servicedefaults": {
