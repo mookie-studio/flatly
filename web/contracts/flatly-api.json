@@ -352,6 +352,131 @@
           }
         }
       }
+    },
+    "/api/v1/flats/{flatId}/leave": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Leaves a flat. The membership is kept as history. The last admin of a flat with other members cannot leave, so the flat always keeps an admin.",
+        "operationId": "LeaveFlat",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}/members/{userId}": {
+      "patch": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Promotes or demotes an active member of a flat. Only an admin may do it; members get 403. The sole admin of a flat cannot be demoted, so the flat always keeps an admin (409).",
+        "operationId": "ChangeFlatMemberRole",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Removes a member from a flat. Only an admin may do it; members get 403. Admins cannot remove themselves: they use the leave endpoint. Other flats and non-members answer 404.",
+        "operationId": "RemoveFlatMember",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -600,6 +725,22 @@
             "description": "The antiforgery request token."
           }
         }
+      },
+      "ChangeMemberRoleRequest": {
+        "required": [
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required: `Admin` or `Member`."
+          }
+        },
+        "description": "Request to promote or demote a member of a flat."
       }
     }
   },
