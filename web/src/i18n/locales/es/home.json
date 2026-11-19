@@ -1,3 +1,5 @@
 {
-  "title": "Inicio"
+  "title": "Inicio",
+  "loadError": "No pudimos cargar tu piso. Inténtalo más tarde.",
+  "loading": "Cargando…"
 }

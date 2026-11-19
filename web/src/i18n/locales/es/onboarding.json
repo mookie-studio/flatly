@@ -1,0 +1,19 @@
+{
+  "choose": {
+    "title": "Bienvenida a Flatly",
+    "intro": "Crea un piso para las personas con las que lo compartes, o únete a uno que ya exista.",
+    "create": "Crear un piso",
+    "join": "Unirme a un piso",
+    "joinUnavailable": "Unirse con un código de invitación llegará pronto."
+  },
+  "create": {
+    "title": "Crea tu piso",
+    "intro": "Ponle un nombre a tu piso. Podrás cambiarlo más adelante.",
+    "nameLabel": "Nombre del piso",
+    "namePlaceholder": "Por ejemplo, Calle Mayor 12",
+    "submit": "Crear piso",
+    "submitting": "Creando…",
+    "back": "Atrás",
+    "error": "No pudimos crear tu piso. Revisa tu conexión e inténtalo de nuevo."
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "choose": {
+    "title": "Welcome to Flatly",
+    "intro": "Start a flat for the people you share it with, or join one that already exists.",
+    "create": "Create a flat",
+    "join": "Join a flat",
+    "joinUnavailable": "Joining with an invitation code is coming soon."
+  },
+  "create": {
+    "title": "Create your flat",
+    "intro": "Give your flat a name. You can change it later.",
+    "nameLabel": "Flat name",
+    "namePlaceholder": "For example, Calle Mayor 12",
+    "submit": "Create flat",
+    "submitting": "Creating…",
+    "back": "Back",
+    "error": "We could not create your flat. Check your connection and try again."
+  }
+}
