@@ -159,3 +159,12 @@ factory.Clock.Advance(TimeSpan.FromDays(3));
 ```
 
 `GET /api/v1/platform/clock-sample` is a sample endpoint that returns the time from this clock. Remove it when the first real endpoint reads time the same way.
+
+### Email and external sign-in
+
+The API never talks to an email provider or to Google or Microsoft directly from a feature. Integration tests replace both with fakes:
+
+- **Email:** code sends mail through `IEmailSender` (`Modules/Platform/Email`). The test host registers `FakeEmailSender`, and every message the API sends lands in `factory.Email.Outbox`, oldest first. `factory.Email.Clear()` empties it.
+- **External sign-in:** `factory.ExternalSignIn.SignIn(new FakeExternalAccount("Google", "subject", "ana@example.com"))` returns a ticket for that account. A request that sends the ticket in the `X-Fake-External-Ticket` header is authenticated as that account through the `FakeExternal` scheme.
+
+The fakes live in `tests/Flatly.Api.IntegrationTests/Fakes`. The real Google and Microsoft sign-in flows and the email provider are added by their own issues, and they do not change these fakes.
