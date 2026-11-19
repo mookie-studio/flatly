@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.JavaScript" Version="13.6.5" />
     <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="13.6.5" />
     <ProjectReference Include="..\Flatly.Api\Flatly.Api.csproj" />
   </ItemGroup>
