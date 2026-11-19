@@ -54,7 +54,8 @@ public static class PlatformModule
             .MapAuthEndpoints()
             .MapValidationSample()
             .MapClockSample()
-            .MapProfile();
+            .MapProfile()
+            .MapAccount();
         return app;
     }
 
