@@ -7,11 +7,13 @@ import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
 import enNotFound from './locales/en/notFound.json'
 import enOnboarding from './locales/en/onboarding.json'
+import enProfile from './locales/en/profile.json'
 import esAuth from './locales/es/auth.json'
 import esCommon from './locales/es/common.json'
 import esHome from './locales/es/home.json'
 import esNotFound from './locales/es/notFound.json'
 import esOnboarding from './locales/es/onboarding.json'
+import esProfile from './locales/es/profile.json'
 import enShell from './locales/en/shell.json'
 import esShell from './locales/es/shell.json'
 
@@ -29,6 +31,7 @@ export const resources = {
     home: esHome,
     notFound: esNotFound,
     onboarding: esOnboarding,
+    profile: esProfile,
     shell: esShell,
   },
   en: {
@@ -37,6 +40,7 @@ export const resources = {
     home: enHome,
     notFound: enNotFound,
     onboarding: enOnboarding,
+    profile: enProfile,
     shell: enShell,
   },
 } as const
@@ -53,7 +57,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    ns: ['common', 'auth', 'home', 'notFound', 'onboarding', 'shell'],
+    ns: ['common', 'auth', 'home', 'notFound', 'onboarding', 'profile', 'shell'],
     defaultNS,
     supportedLngs: SUPPORTED_LANGUAGES,
     nonExplicitSupportedLngs: true,

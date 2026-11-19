@@ -8,7 +8,8 @@
   },
   "nav": {
     "primary": "Principal",
-    "home": "Inicio"
+    "home": "Inicio",
+    "profile": "Perfil"
   },
   "signOut": {
     "action": "Cerrar sesión",

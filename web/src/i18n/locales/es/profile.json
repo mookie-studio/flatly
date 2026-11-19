@@ -1,0 +1,37 @@
+{
+  "title": "Perfil y ajustes",
+  "intro": "Tu nombre se muestra a los demás miembros de tus pisos.",
+  "loadError": "No pudimos cargar tu perfil. Inténtalo de nuevo.",
+  "form": {
+    "displayName": "Nombre visible",
+    "displayNameRequired": "Escribe el nombre que verán los demás miembros.",
+    "avatarUrl": "URL del avatar",
+    "avatarHint": "Opcional. Usa un enlace seguro (https) a una imagen. Déjalo vacío para quitar tu avatar.",
+    "avatarInvalid": "El avatar debe ser un enlace seguro (https).",
+    "language": "Idioma de la aplicación",
+    "timeZone": "Zona horaria",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "saved": "Tus cambios están guardados.",
+    "saveError": "No pudimos guardar tu perfil. Inténtalo de nuevo."
+  },
+  "export": {
+    "title": "Tus datos",
+    "intro": "Descarga una copia de tu perfil y de todos los pisos en los que has estado.",
+    "action": "Descargar mis datos",
+    "preparing": "Preparando…",
+    "error": "No pudimos preparar tus datos. Inténtalo de nuevo."
+  },
+  "delete": {
+    "title": "Eliminar cuenta",
+    "intro": "Al eliminar tu cuenta sales de todos los pisos. Tu nombre aparecerá como \"Antiguo miembro\" en ellos, y ya no podrás iniciar sesión.",
+    "action": "Eliminar mi cuenta",
+    "confirmTitle": "¿Eliminar tu cuenta?",
+    "confirmBody": "No se puede deshacer. Se cerrará tu sesión de inmediato.",
+    "confirm": "Sí, eliminar mi cuenta",
+    "cancel": "Cancelar",
+    "deleting": "Eliminando…",
+    "lastAdmin": "Eres el último administrador de un piso con otros miembros. Antes, haz administrador a otro miembro de estos pisos:",
+    "error": "No pudimos eliminar tu cuenta. Inténtalo de nuevo."
+  }
+}

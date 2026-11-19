@@ -56,6 +56,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deletes the signed-in member's account. Requires the antiforgery token in the X-XSRF-TOKEN header. */
+        delete: operations["DeleteAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/account/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Returns the signed-in member's data: their profile and every flat membership, active or left. */
+        get: operations["ExportAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/flats": {
         parameters: {
             query?: never;
@@ -224,6 +258,37 @@ export interface components {
             /** @description IANA time zone identifier, for example `Europe/Madrid`. */
             timeZoneId: string;
         };
+        /** @description One membership of the member, active or left, in a flat. */
+        AccountMembershipExport: {
+            /** Format: uuid */
+            flatId: string;
+            flatName: string;
+            /** @description `Admin` or `Member`. */
+            role: string;
+            /** @description When the member joined, in UTC. */
+            joinedAt: string;
+            /** @description When the member left, in UTC, or null while the membership is active. */
+            leftAt: null | string;
+        };
+        /** @description The profile part of the account export. */
+        AccountProfileExport: {
+            displayName: string;
+            /** @description Email the sign-in provider reported, or null. */
+            email: null | string;
+            avatarUrl: null | string;
+            preferredLanguage: string;
+            timeZoneId: string;
+            /** @description When the account was created, in UTC. */
+            createdAt: string;
+        };
+        /** @description The data export of the signed-in member. */
+        AccountExportResponse: {
+            /** @description When the export was made, in UTC. */
+            exportedAt: string;
+            profile: components["schemas"]["AccountProfileExport"];
+            /** @description Every flat the member has been in, oldest first. */
+            memberships: components["schemas"]["AccountMembershipExport"][];
+        };
         /** @description Request to rename a flat. */
         UpdateFlatRequest: {
             /** @description Required, at most 80 characters. */
@@ -357,6 +422,77 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProfileResponse"];
                 };
+            };
+        };
+    };
+    DeleteAccount: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Antiforgery token, from `GET /api/v1/platform/auth/antiforgery-token`. */
+                "X-XSRF-TOKEN": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The account was deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The antiforgery token is missing or invalid. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No signed-in account. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The member is the last admin of a flat with other members. The problem lists those flats. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": unknown;
+                };
+            };
+        };
+    };
+    ExportAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExportResponse"];
+                };
+            };
+            /** @description No signed-in account. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

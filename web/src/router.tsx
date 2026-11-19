@@ -6,6 +6,7 @@ import { FlatHome } from '@/pages/FlatHome'
 import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
+import { Profile } from '@/pages/Profile'
 
 export const routes: RouteObject[] = [
   {
@@ -20,6 +21,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Home /> },
           { path: 'f/:flatId', element: <FlatHome /> },
+          { path: 'profile', element: <Profile /> },
           { path: '*', element: <NotFound /> },
         ],
       },
