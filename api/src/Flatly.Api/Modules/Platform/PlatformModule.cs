@@ -32,6 +32,7 @@ public static class PlatformModule
             .AddEntityFrameworkStores<FlatlyDbContext>();
         services.AddScoped<ExternalAccountService>();
         ConfigureSignIn(services);
+        services.AddScoped<CurrentAccountResolver>();
         // Notification emails go through IEmailSender: SMTP locally, Resend in deployment (see api/README.md).
         services.AddEmailSender();
         // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.

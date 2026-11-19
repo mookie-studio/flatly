@@ -2,6 +2,7 @@ using Flatly.Api.Data;
 using Flatly.Api.IntegrationTests.Fakes;
 using Flatly.Api.Modules.Platform.Email;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -46,7 +47,8 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
             services.AddSingleton<IEmailSender>(Email);
 
             services.AddSingleton(ExternalSignIn);
-            services.AddAuthentication()
+            // The fake provider is the default scheme of the test host, so requests with a ticket are signed in.
+            services.AddAuthentication(options => options.DefaultAuthenticateScheme = FakeExternalAuthenticationHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, FakeExternalAuthenticationHandler>(
                     FakeExternalAuthenticationHandler.SchemeName,
                     _ => { });
@@ -55,5 +57,16 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
             services.PostConfigure<AuthenticationOptions>(options =>
                 options.DefaultScheme = FakeExternalAuthenticationHandler.SchemeName);
         });
+    }
+
+    /// <summary>
+    /// Creates a client that sends requests as <paramref name="account"/>. The account must already exist in the database:
+    /// use <c>ExternalAccountService.FindOrCreateAsync</c> to create it.
+    /// </summary>
+    public HttpClient CreateSignedInClient(FakeExternalAccount account)
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Add(FakeExternalAuthenticationHandler.TicketHeader, ExternalSignIn.SignIn(account));
+        return client;
     }
 }

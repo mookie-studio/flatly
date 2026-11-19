@@ -78,7 +78,15 @@ The connection string is `ConnectionStrings:flatly`. Aspire injects it from the 
 
 - Migrations are additive only, so the previous version keeps working on the new schema (see [ADR-001](../docs/adr/0001-stack-and-deployment.md)).
 
-The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. The feature tasks add their entities and their migrations.
+The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). The feature tasks add their entities and their migrations.
+
+### Flats and memberships
+
+`Modules/Flats` holds the tenant of the product (ADR-002). A flat has a name and a creation time. A membership links a user to a flat with a role (`Admin` or `Member`), a join time and an optional leave time. Leaving keeps the row. The creator of a flat becomes its admin.
+
+The endpoints are `POST /api/v1/flats`, `GET /api/v1/flats` (the caller's active flats) and `GET /api/v1/flats/{flatId}`. A flat the caller does not belong to answers 404. Tenant scoping for other modules is added by the next task (#76).
+
+Endpoints identify the caller with `CurrentAccountResolver` (`Modules/Platform/Identity`). It reads the provider and subject from the signed-in principal and returns 401 when nobody is signed in. Production has no authentication middleware yet, so these endpoints answer 401 until the sign-in task adds it. The integration tests add the middleware and sign in with the fake provider (`FlatlyApiFactory.CreateSignedInClient`).
 
 ### Accounts
 
