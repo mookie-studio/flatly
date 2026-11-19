@@ -307,6 +307,171 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         Assert.Equal("Ana rename iso", (await anaClient.GetFromJsonAsync<FlatResponse>($"{FlatsUrl}/{anasFlat.Id}"))!.Name);
     }
 
+    [SkippableFact]
+    public async Task AMemberCanLeaveAndLosesAccessToTheFlat()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "leave-ana");
+        var bruno = await CreateAccountAsync(factory, "leave-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Leave flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+
+        var response = await brunoClient.PostAsync($"{FlatsUrl}/{flat.Id}/leave", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await brunoClient.GetAsync($"{FlatsUrl}/{flat.Id}")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await brunoClient.GetAsync($"{FlatsUrl}/{flat.Id}/members")).StatusCode);
+        var membership = await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject);
+        Assert.Equal(Start, membership.LeftAt);
+        Assert.Equal(MemberRole.Member, membership.Role);
+    }
+
+    [SkippableFact]
+    public async Task TheLastAdminCannotLeaveAFlatThatHasOtherMembers()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "last-admin-ana");
+        var bruno = await CreateAccountAsync(factory, "last-admin-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Keep admin"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+
+        var response = await anaClient.PostAsync($"{FlatsUrl}/{flat.Id}/leave", null);
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Null((await FindMembershipAsync(factory, flat.Id, ana.Provider, ana.Subject)).LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task TheSoleMemberOfAFlatCanLeaveIt()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "sole-ana");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Sole flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        var response = await anaClient.PostAsync($"{FlatsUrl}/{flat!.Id}/leave", null);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.NotNull((await FindMembershipAsync(factory, flat.Id, ana.Provider, ana.Subject)).LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task LeavingAFlatYouAreNotInAnswersNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "leave-iso-ana");
+        var bruno = await CreateAccountAsync(factory, "leave-iso-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Leave iso"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        await FlatIsolation.AssertNotFoundForNonMemberAsync(
+            brunoClient, anasFlat!.Id, id => $"{FlatsUrl}/{id}/leave", HttpMethod.Post);
+        Assert.Null((await FindMembershipAsync(factory, anasFlat.Id, ana.Provider, ana.Subject)).LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task AnAdminCanRemoveAMemberWhoKeepsTheirHistory()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "remove-ana");
+        var bruno = await CreateAccountAsync(factory, "remove-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Remove flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+
+        var response = await anaClient.DeleteAsync($"{FlatsUrl}/{flat.Id}/members/{(await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).UserId}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await brunoClient.GetAsync($"{FlatsUrl}/{flat.Id}")).StatusCode);
+        var membership = await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject);
+        Assert.Equal(Start, membership.LeftAt);
+        Assert.Equal(["remove-ana"], (await anaClient.GetFromJsonAsync<List<FlatMemberResponse>>($"{FlatsUrl}/{flat.Id}/members"))!
+            .Select(member => member.DisplayName));
+    }
+
+    [SkippableFact]
+    public async Task AMemberCannotRemoveAnotherMember()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "remove-owner");
+        var bruno = await CreateAccountAsync(factory, "remove-member-bruno");
+        var carla = await CreateAccountAsync(factory, "remove-member-carla");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("No removals"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+        await AddMemberAsync(factory, flat.Id, carla, MemberRole.Member);
+        var carlaId = (await FindMembershipAsync(factory, flat.Id, carla.Provider, carla.Subject)).UserId;
+
+        var response = await brunoClient.DeleteAsync($"{FlatsUrl}/{flat.Id}/members/{carlaId}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Null((await FindMembershipAsync(factory, flat.Id, carla.Provider, carla.Subject)).LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task AnAdminCannotRemoveThemselvesAndNonMembersAreNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "self-remove-ana");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Self remove"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var anaId = (await FindMembershipAsync(factory, flat!.Id, ana.Provider, ana.Subject)).UserId;
+
+        var self = await anaClient.DeleteAsync($"{FlatsUrl}/{flat.Id}/members/{anaId}");
+        var unknown = await anaClient.DeleteAsync($"{FlatsUrl}/{flat.Id}/members/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, self.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        Assert.Null((await FindMembershipAsync(factory, flat.Id, ana.Provider, ana.Subject)).LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task RemovingFromAFlatOfAnotherMemberAnswersNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "remove-iso-ana");
+        var bruno = await CreateAccountAsync(factory, "remove-iso-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Remove iso"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var anaId = (await FindMembershipAsync(factory, anasFlat!.Id, ana.Provider, ana.Subject)).UserId;
+
+        await FlatIsolation.AssertNotFoundForNonMemberAsync(
+            brunoClient, anasFlat.Id, id => $"{FlatsUrl}/{id}/members/{anaId}", HttpMethod.Delete);
+        Assert.Null((await FindMembershipAsync(factory, anasFlat.Id, ana.Provider, ana.Subject)).LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task AFormerMemberCanRejoinWithANewMembership()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "rejoin-ana");
+        var bruno = await CreateAccountAsync(factory, "rejoin-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Rejoin flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member, leftAt: Start.AddDays(1));
+
+        await AddMemberAsync(factory, flat.Id, bruno, MemberRole.Member, joinedAt: Start.AddDays(2));
+
+        Assert.Equal(HttpStatusCode.OK, (await brunoClient.GetAsync($"{FlatsUrl}/{flat.Id}")).StatusCode);
+    }
+
     private static async Task<FakeExternalAccount> CreateAccountAsync(FlatlyApiFactory factory, string name)
     {
         var account = new FakeExternalAccount(ExternalProviders.Google, $"{name}-{Guid.NewGuid():N}", $"{name}@example.com", name);

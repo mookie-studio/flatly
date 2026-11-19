@@ -27,7 +27,9 @@ public static class FlatsModule
             .MapListMyFlats()
             .MapGetFlat()
             .MapRenameFlat()
-            .MapListMembers();
+            .MapListMembers()
+            .MapLeaveFlat()
+            .MapRemoveMember();
         return app;
     }
 }
