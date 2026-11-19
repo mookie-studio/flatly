@@ -1,4 +1,5 @@
 using Flatly.Api.Data;
+using Flatly.Api.Documentation;
 using Flatly.Api.Errors;
 using Flatly.Api.Modules;
 
@@ -11,14 +12,14 @@ builder.AddServiceDefaults();
 // and unhandled exceptions (see Errors/UnhandledExceptionHandler).
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<UnhandledExceptionHandler>();
-builder.Services.AddOpenApi();
+builder.Services.AddFlatlyOpenApi();
 builder.Services.AddFlatlyModules();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.MapDefaultEndpoints();
-app.MapOpenApi();
+app.MapFlatlyOpenApi();
 app.MapFlatlyModules();
 
 // `dotnet run --project src/Flatly.Api -- migrate` applies the pending migrations and exits. Deployment runs it before the new version starts.

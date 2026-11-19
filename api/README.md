@@ -92,7 +92,11 @@ Each module is a static class `<Name>Module` with three members:
 1. Create `src/Flatly.Api/Modules/<Name>/<Name>Module.cs` following the convention above.
 2. Add one line to `AddFlatlyModules` and one to `MapFlatlyModules` in `Modules/FlatlyModules.cs`.
 3. Add the new module's folder to the layout above when it is a new product area.
-4. Build and run: `dotnet build Flatly.slnx` and `dotnet run --project src/Flatly.AppHost` (or `src/Flatly.Api` on its own, without PostgreSQL). The OpenAPI document is at `/openapi/v1.json`.
+4. Build and run: `dotnet build Flatly.slnx` and `dotnet run --project src/Flatly.AppHost` (or `src/Flatly.Api` on its own, without PostgreSQL). The OpenAPI document is at `/openapi/v1.json`. Scalar, the API reference UI, is at `/scalar` in Development and Staging only; it is not served in Production.
+
+## OpenAPI and operation ids
+
+The OpenAPI document is generated from the endpoints, and the frontend generates its typed client from it. Every endpoint under `/api/` must call `.WithName("...")` with a unique name, because that name becomes the `operationId`. Renaming an endpoint changes its operation id, which breaks the generated client, so rename one only together with the client that uses it. `Documentation/OpenApiSetup.cs` holds the registration, and `Documentation/OpenApiSetupTests.cs` fails when two endpoints share a name.
 
 ## Errors and validation
 
