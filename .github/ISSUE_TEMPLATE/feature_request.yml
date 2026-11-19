@@ -1,0 +1,32 @@
+name: Feature request
+description: Propose a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: mvp
+    attributes:
+      label: MVP scope
+      description: Which MVP does this feature belong to?
+      options:
+        - mvp1
+        - mvp2
+        - post-mvp
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this solve, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
