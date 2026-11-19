@@ -2,6 +2,7 @@ using System.Text.Json;
 using Flatly.Api.Data;
 using Flatly.Api.Modules.Notifications.Domain;
 using Flatly.Api.Modules.Notifications.Texts;
+using Microsoft.EntityFrameworkCore;
 
 namespace Flatly.Api.Modules.Notifications.Endpoints;
 
@@ -10,11 +11,12 @@ internal static class NotificationQueries
 {
     /// <summary>
     /// The notifications the caller may see: their own, about a flat they are still an active member of. Notifications about
-    /// a flat they left stay in the table but disappear from the inbox (ADR-002).
+    /// a flat they left stay in the table but disappear from the inbox (ADR-002). The membership check ignores the flat
+    /// filter on purpose: the inbox spans every flat of the member, while the request has no current flat.
     /// </summary>
     public static IQueryable<Notification> VisibleTo(FlatlyDbContext database, Guid userId) =>
         database.Notifications.Where(notification => notification.UserId == userId
-            && database.Memberships.Any(membership => membership.FlatId == notification.FlatId
+            && database.Memberships.IgnoreQueryFilters().Any(membership => membership.FlatId == notification.FlatId
                 && membership.UserId == userId
                 && membership.LeftAt == null));
 

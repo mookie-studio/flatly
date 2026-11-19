@@ -1,3 +1,4 @@
+using Flatly.Api.Data.Tenancy;
 using Flatly.Api.Modules.Flats.Data;
 using Flatly.Api.Modules.Flats.Domain;
 using Flatly.Api.Modules.Notifications.Data;
@@ -22,17 +23,21 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
     /// <summary>Who belongs to which flat, with the role and the join and leave dates.</summary>
     public DbSet<Membership> Memberships => Set<Membership>();
 
-    /// <summary>In-app notifications, one row per recipient.</summary>
+    /// <summary>In-app notifications, one row per recipient. Not flat-scoped: the inbox spans every flat of the member.</summary>
     public DbSet<Notification> Notifications => Set<Notification>();
 
-    /// <summary>Creates the context with the options registered by the host.</summary>
-    public FlatlyDbContext(DbContextOptions<FlatlyDbContext> options) : base(options)
+    private readonly CurrentFlat _currentFlat;
+
+    /// <summary>Creates the context with the options and the current flat registered by the host.</summary>
+    public FlatlyDbContext(DbContextOptions<FlatlyDbContext> options, CurrentFlat currentFlat) : base(options)
     {
+        _currentFlat = currentFlat;
     }
 
     /// <summary>Creates the context from non-generic options, for derived contexts such as test models.</summary>
-    protected FlatlyDbContext(DbContextOptions options) : base(options)
+    protected FlatlyDbContext(DbContextOptions options, CurrentFlat currentFlat) : base(options)
     {
+        _currentFlat = currentFlat;
     }
 
     /// <inheritdoc />
@@ -66,6 +71,14 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
         builder.Entity<IdentityUserClaim<Guid>>().ToTable("user_claims");
         builder.Entity<IdentityUserToken<Guid>>().ToTable("user_tokens");
         FlatsModelConfiguration.Configure(builder);
+
+        // Tenant isolation (ADR-002): every flat-scoped entity is filtered to the flat of the current request.
+        // Each IFlatScoped entity needs one line here; the unit tests fail when one is missing.
+        FilterByCurrentFlat<Membership>(builder);
+
         NotificationsModelConfiguration.Configure(builder);
     }
+
+    private void FilterByCurrentFlat<TEntity>(ModelBuilder builder) where TEntity : class, IFlatScoped =>
+        builder.Entity<TEntity>().HasQueryFilter(entity => entity.FlatId == _currentFlat.Id);
 }

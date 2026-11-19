@@ -17,6 +17,6 @@ public sealed class FlatlyDbContextFactory : IDesignTimeDbContextFactory<FlatlyD
             .UseSnakeCaseNamingConvention()
             .Options;
 
-        return new FlatlyDbContext(options);
+        return new FlatlyDbContext(options, new Tenancy.CurrentFlat());
     }
 }

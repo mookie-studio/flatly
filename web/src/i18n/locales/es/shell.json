@@ -9,5 +9,13 @@
   "nav": {
     "primary": "Principal",
     "home": "Inicio"
+  },
+  "signOut": {
+    "action": "Cerrar sesión",
+    "error": "No pudimos cerrar tu sesión. Inténtalo de nuevo."
+  },
+  "flatSwitcher": {
+    "label": "Cambiar de piso",
+    "placeholder": "Elige un piso"
   }
 }

@@ -14,6 +14,8 @@ public static class FlatsModule
     public static IServiceCollection AddFlatsModule(this IServiceCollection services)
     {
         services.AddSingleton<IRequestValidator<CreateFlatRequest>, CreateFlatRequestValidator>();
+        services.AddSingleton<IRequestValidator<UpdateFlatRequest>, UpdateFlatRequestValidator>();
+        services.AddSingleton<IRequestValidator<ChangeMemberRoleRequest>, ChangeMemberRoleRequestValidator>();
         return services;
     }
 
@@ -24,7 +26,12 @@ public static class FlatsModule
             .WithTags("Flats")
             .MapCreateFlat()
             .MapListMyFlats()
-            .MapGetFlat();
+            .MapGetFlat()
+            .MapRenameFlat()
+            .MapListMembers()
+            .MapLeaveFlat()
+            .MapRemoveMember()
+            .MapChangeMemberRole();
         return app;
     }
 }

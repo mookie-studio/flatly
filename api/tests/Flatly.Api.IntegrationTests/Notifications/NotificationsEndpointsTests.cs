@@ -275,7 +275,8 @@ public sealed class NotificationsEndpointsTests(PostgresContainer postgres)
         var userId = await UserIdAsync(factory, account);
         await using var scope = factory.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
-        var membership = await database.Memberships.SingleAsync(item => item.FlatId == flatId && item.UserId == userId);
+        var membership = await database.Memberships.IgnoreQueryFilters()
+            .SingleAsync(item => item.FlatId == flatId && item.UserId == userId);
         membership.LeftAt = Start;
         await database.SaveChangesAsync();
     }

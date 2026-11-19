@@ -2,6 +2,7 @@ import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react
 import { RequireAuth } from '@/components/layout/Guards'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { PublicLayout } from '@/components/layout/PublicLayout'
+import { FlatHome } from '@/pages/FlatHome'
 import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
@@ -18,6 +19,7 @@ export const routes: RouteObject[] = [
         element: <AppLayout />,
         children: [
           { index: true, element: <Home /> },
+          { path: 'f/:flatId', element: <FlatHome /> },
           { path: '*', element: <NotFound /> },
         ],
       },

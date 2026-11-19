@@ -3,6 +3,8 @@ import { NavLink, Outlet } from 'react-router'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { ThemeToggle } from '@/theme/ThemeToggle'
 import { BrandLink } from './BrandLink'
+import { FlatSwitcher } from './FlatSwitcher'
+import { SignOutButton } from './SignOutButton'
 import { primaryNav } from './navigation'
 
 /**
@@ -37,8 +39,10 @@ export function AppLayout() {
             </ul>
           </nav>
           <div className="flex flex-wrap items-center gap-3">
+            <FlatSwitcher />
             <LanguageSwitcher />
             <ThemeToggle />
+            <SignOutButton />
           </div>
         </div>
       </header>

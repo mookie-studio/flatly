@@ -57,7 +57,8 @@ public sealed class NotificationService(FlatlyDbContext database, TimeProvider c
         }
 
         // Notifying a former member or a stranger would leak the flat's activity to them, so every recipient must be active.
-        var activeCount = await database.Memberships.AsNoTracking()
+        // Ignores the current-flat filter: the module names the flat, and the check below is the membership itself.
+        var activeCount = await database.Memberships.IgnoreQueryFilters().AsNoTracking()
             .CountAsync(
                 membership => membership.FlatId == request.FlatId
                     && membership.LeftAt == null

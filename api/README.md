@@ -84,13 +84,30 @@ The migration `Initial` is empty. `AddIdentity` creates the account tables: `use
 
 `Modules/Flats` holds the tenant of the product (ADR-002). A flat has a name and a creation time. A membership links a user to a flat with a role (`Admin` or `Member`), a join time and an optional leave time. Leaving keeps the row. The creator of a flat becomes its admin.
 
-The endpoints are `POST /api/v1/flats`, `GET /api/v1/flats` (the caller's active flats) and `GET /api/v1/flats/{flatId}`. A flat the caller does not belong to answers 404. Tenant scoping for other modules is added by the next task (#76).
+The endpoints are `POST /api/v1/flats`, `GET /api/v1/flats` (the caller's active flats) and `GET /api/v1/flats/{flatId}`. A flat the caller does not belong to answers 404.
+
+### Tenant scoping (flat route)
+
+Endpoints that read or change one flat's data go under `/{flatId}` with `MapFlatScope()` (`Modules/Flats/Scope`). The filter there checks that the signed-in account has an active membership, sets `CurrentFlat` for the request, and answers 401 without a sign-in or 404 for any other flat (ADR-002).
+
+Every entity that belongs to a flat implements `IFlatScoped` and gets one line in `FlatlyDbContext.OnModelCreating` (`FilterByCurrentFlat<T>`). Its query filter returns rows only for the flat in `CurrentFlat`; with no flat in scope it returns nothing. `ListMyFlats` is the one query that ignores the filter on purpose, because it lists the caller's memberships across flats.
+
+Tests: `FlatScopeModelTests` (unit) fails when a flat-scoped entity has no filter. `FlatIsolation.AssertNotFoundForNonMemberAsync` (integration) is the shared check that a non-member gets 404; each new flat-scoped endpoint test calls it.
 
 Endpoints identify the caller with `CurrentAccountResolver` (`Modules/Platform/Identity`). It reads the provider and subject from the signed-in principal and returns 401 when nobody is signed in. Production has no authentication middleware yet, so these endpoints answer 401 until the sign-in task adds it. The integration tests add the middleware and sign in with the fake provider (`FlatlyApiFactory.CreateSignedInClient`).
 
 ### Accounts
 
-Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. The sign-in endpoints and the cookie session are added by their own tasks.
+Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. Sign-in works with Google and Microsoft. Microsoft uses the `common` tenant, so work, school and personal accounts (Outlook, Hotmail, Live) all sign in. The endpoints live in `Modules/Platform/Endpoints/AuthEndpoints.cs`:
+
+- `GET /api/v1/platform/auth/google/sign-in?returnUrl=` starts the Google sign-in (the provider's callback is `/signin-google`). `returnUrl` may only point to the web origin (`Web:Origin`); anything else goes to its home page.
+- `GET /api/v1/platform/auth/microsoft/sign-in?returnUrl=` starts the Microsoft sign-in (the provider's callback is `/signin-microsoft`). It follows the same `returnUrl` rule as Google.
+- `GET /api/v1/platform/auth/session` returns the signed-in member, or 401.
+- `GET /api/v1/platform/auth/antiforgery-token` issues the token that every state-changing request sends in the `X-XSRF-TOKEN` header. `POST /api/v1/platform/auth/sign-out` requires it.
+
+The session is an HttpOnly, Secure, `SameSite=None` cookie (`Flatly.Session`) issued after the callback, because the web app and the API are on different sites. Its principal's name identifier is the Flatly account id.
+
+**Default-deny:** the fallback authorization policy requires a signed-in member on every endpoint. To make an endpoint public, mark it `.AllowAnonymous()` explicitly. Today that is the sign-in, token and sign-out endpoints, the health probes, the OpenAPI document and Scalar, and the two sample endpoints. Integration tests replace the cookie with the fake provider's ticket as the default scheme (see `FlatlyApiFactory`).
 
 ### Notifications
 
@@ -129,6 +146,15 @@ Notifications send email through `IEmailSender` (`Modules/Platform/Email`). Feat
 - **Deployment**: `Email__Provider=Resend`, with the sender domain verified in Resend. The API key is a secret: set `Email__Resend__ApiKey` in App Service settings, never in the repository.
 - **Settings** (section `Email`): `Provider` (`Smtp` or `Resend`), `FromAddress`, `FromName`, `Smtp:Host`, `Smtp:Port`, `Smtp:EnableSsl`, `Smtp:UserName`, `Smtp:Password`, `Resend:ApiKey`, `Resend:BaseUrl`. A missing sender address, an unknown provider or a missing Resend key stops the API at startup.
 - **Templates**: `EmailTemplates.Notification` renders a notification in Spanish or English from the member's `preferred_language`. Unknown or missing languages fall back to Spanish.
+
+## Background jobs and reminders
+
+Scheduled work runs on Hangfire with PostgreSQL storage (`Modules/Platform/Scheduling`). Features schedule reminders through `IReminderScheduler` and never reference Hangfire. `Schedule(reminderId, deliverAt)` returns a job id, and `Cancel(jobId)` removes the job.
+
+- **Survives restarts**: Hangfire keeps scheduled jobs in the `hangfire` schema of the same database. It creates that schema on first start, so no EF migration is involved. `ReminderSchedulingTests` restarts the host and checks that the job is still there.
+- **Single instance**: the Hangfire server runs inside the API process, so one App Service instance runs the jobs. Scaling out to several instances would need a review of that choice.
+- **Dashboard**: `/hangfire` is served in Development only, and the filter refuses it elsewhere. Production has no platform admin role yet, so the dashboard is not served there at all.
+- **Delivery**: `ReminderJobs.DeliverAsync` only logs for now. The notifications issue (#62) replaces the log with the delivery.
 
 ## Errors and validation
 

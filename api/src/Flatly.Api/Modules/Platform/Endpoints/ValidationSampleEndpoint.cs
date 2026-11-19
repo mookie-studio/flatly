@@ -38,6 +38,7 @@ public static class ValidationSampleEndpoint
     public static RouteGroupBuilder MapValidationSample(this RouteGroupBuilder group)
     {
         group.MapPost("/validation-sample", (ValidationSampleRequest request) => TypedResults.Ok(request))
+            .AllowAnonymous()
             .AddEndpointFilter<ValidationFilter<ValidationSampleRequest>>()
             .WithName("ValidationSample")
             .WithSummary("Sample endpoint showing field-keyed validation errors (400 ProblemDetails).");

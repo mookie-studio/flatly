@@ -62,6 +62,56 @@
         }
       }
     },
+    "/api/v1/platform/profile": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Returns the signed-in member's profile.",
+        "operationId": "GetProfile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Replaces the signed-in member's profile: name, avatar, language and time zone.",
+        "operationId": "UpdateProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/flats": {
       "post": {
         "tags": [
@@ -146,6 +196,159 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Renames a flat. Only an admin of the flat may do it; members get 403.",
+        "operationId": "RenameFlat",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}/members": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Lists the active members of a flat, admins first. Members who have left are not listed.",
+        "operationId": "ListFlatMembers",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlatMemberResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/session": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "The signed-in member. Returns 401 when there is no session.",
+        "operationId": "GetSession",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/antiforgery-token": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Issues the antiforgery token that state-changing requests send in the X-XSRF-TOKEN header.",
+        "operationId": "GetAntiforgeryToken",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AntiforgeryTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Ends the session. Requires the antiforgery token in the X-XSRF-TOKEN header.",
+        "operationId": "SignOut",
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
           }
         }
       }
@@ -310,6 +513,44 @@
         },
         "description": "Request to create a flat."
       },
+      "FlatMemberResponse": {
+        "required": [
+          "userId",
+          "displayName",
+          "avatarUrl",
+          "role",
+          "joinedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Identifier of the member's account.",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name the member shows in the flat."
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Absolute https URL of the avatar, or null when there is none."
+          },
+          "role": {
+            "type": "string",
+            "description": "The member's role in the flat: `Admin` or `Member`."
+          },
+          "joinedAt": {
+            "type": "string",
+            "description": "When the member joined the flat, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "An active member of a flat, as seen by the other members."
+      },
       "FlatResponse": {
         "required": [
           "id",
@@ -340,50 +581,150 @@
         },
         "description": "A flat as seen by one of its members."
       },
-      "HttpValidationProblemDetails": {
+      "ProfileResponse": {
+        "required": [
+          "displayName",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId"
+        ],
         "type": "object",
         "properties": {
-          "type": {
-            "type": [
-              "null",
-              "string"
-            ]
+          "displayName": {
+            "type": "string",
+            "description": "Name shown to the other members of the flat."
           },
-          "title": {
+          "avatarUrl": {
             "type": [
               "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
               "string"
             ],
-            "format": "int32"
+            "description": "Absolute https URL of the avatar, or null when there is none."
           },
-          "detail": {
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Interface language: `es` or `en`."
+          },
+          "timeZoneId": {
+            "type": "string",
+            "description": "IANA time zone identifier, for example `Europe/Madrid`."
+          }
+        },
+        "description": "The profile of the signed-in member."
+      },
+      "UpdateFlatRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required, at most 80 characters."
+          }
+        },
+        "description": "Request to rename a flat."
+      },
+      "UpdateProfileRequest": {
+        "required": [
+          "displayName",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
             "type": [
               "null",
               "string"
             ]
           },
-          "instance": {
+          "avatarUrl": {
             "type": [
               "null",
               "string"
             ]
           },
-          "errors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
+          "preferredLanguage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "timeZoneId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The full profile sent to `PUT profile`. Every field replaces the stored value, so an absent or empty\n`avatarUrl` removes the avatar."
+      },
+      "ValidationSampleRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required, at most 50 characters."
+          }
+        },
+        "description": "Request of the sample endpoint that demonstrates field-keyed validation errors."
+      },
+      "SessionResponse": {
+        "type": "object",
+        "required": [
+          "userId",
+          "displayName",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Flatly account id."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name shown to the other members of a flat."
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Picture URL, or null."
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Interface language, es or en."
+          },
+          "timeZoneId": {
+            "type": "string",
+            "description": "IANA time zone identifier."
+          }
+        }
+      },
+      "AntiforgeryTokenResponse": {
+        "type": "object",
+        "required": [
+          "requestToken"
+        ],
+        "properties": {
+          "requestToken": {
+            "type": "string",
+            "description": "The antiforgery request token."
           }
         }
       },
@@ -432,6 +773,24 @@
           }
         },
         "description": "One page of the inbox, newest first."
+      },
+      "UnreadCountResponse": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of unread notifications.",
+            "format": "int32"
+          }
+        },
+        "description": "How many unread notifications the caller has."
       },
       "NotificationResponse": {
         "required": [
@@ -486,39 +845,52 @@
         },
         "description": "A notification as its recipient reads it."
       },
-      "UnreadCountResponse": {
-        "required": [
-          "count"
-        ],
+      "HttpValidationProblemDetails": {
         "type": "object",
         "properties": {
-          "count": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "The number of unread notifications.",
-            "format": "int32"
-          }
-        },
-        "description": "How many unread notifications the caller has."
-      },
-      "ValidationSampleRequest": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
+          "type": {
             "type": [
               "null",
               "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
             ],
-            "description": "Required, at most 50 characters."
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
-        },
-        "description": "Request of the sample endpoint that demonstrates field-keyed validation errors."
+        }
       }
     }
   },
@@ -528,9 +900,6 @@
     },
     {
       "name": "Flats"
-    },
-    {
-      "name": "Notifications"
     }
   ]
 }

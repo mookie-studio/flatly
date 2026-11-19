@@ -1,10 +1,12 @@
+using Flatly.Api.Data.Tenancy;
+
 namespace Flatly.Api.Modules.Flats.Domain;
 
 /// <summary>
 /// A user's place in a flat. Leaving a flat sets <see cref="LeftAt"/> and keeps the row, so the flat's history stays
 /// (ADR-002). A user has at most one active membership per flat, but may join again after leaving.
 /// </summary>
-public sealed class Membership
+public sealed class Membership : IFlatScoped
 {
     /// <summary>Identifier of the membership.</summary>
     public Guid Id { get; set; }
