@@ -23,6 +23,9 @@ api/
         Shopping/         MVP2
         Calendar/         MVP2
         Maintenance/
+  tests/
+    Flatly.Api.Tests/             Unit tests: pure code and database conventions, no server
+    Flatly.Api.IntegrationTests/  The API in-process against a real PostgreSQL
 ```
 
 Module folders map to the product areas in the spec. Platform covers cross-cutting concerns such as accounts and sign-in.
@@ -137,3 +140,22 @@ GITHUB_ACTIONS=true dotnet build Flatly.slnx -c Release
 The SDK is pinned in `global.json` with `latestFeature` roll-forward. Package versions are locked in `packages.lock.json` files, which are committed.
 
 The AppHost pins the Aspire SDK version in `Flatly.AppHost.csproj`. Keep the Aspire packages on the same version.
+
+## Tests
+
+- **Unit tests** (`tests/Flatly.Api.Tests`) cover pure code and the database conventions. They need no server: `dotnet test tests/Flatly.Api.Tests`.
+- **Integration tests** (`tests/Flatly.Api.IntegrationTests`) host the real API in-process with `WebApplicationFactory` and run it against PostgreSQL 17, started by Testcontainers. They need Docker running. Without Docker they are skipped, and the skip message says why. To use an existing PostgreSQL instead, set `FLATLY_TEST_CONNECTION_STRING`; the tests migrate that database, so give them a database of their own.
+
+  ```
+  dotnet test tests/Flatly.Api.IntegrationTests
+  ```
+
+### Time
+
+Code reads the current time from `TimeProvider`, never from `DateTime.UtcNow`. The Platform module registers `TimeProvider.System`. Integration tests replace it with a `FakeTimeProvider`, which they set or advance through `factory.Clock`:
+
+```csharp
+factory.Clock.Advance(TimeSpan.FromDays(3));
+```
+
+`GET /api/v1/platform/clock-sample` is a sample endpoint that returns the time from this clock. Remove it when the first real endpoint reads time the same way.

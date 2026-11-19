@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Unit tests for the API. Pure modules are tested here; HTTP and database tests arrive with the test harness (#43). -->
+  <!-- Unit tests for the API: pure modules and database conventions, without a server. HTTP and database tests live in Flatly.Api.IntegrationTests. -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>

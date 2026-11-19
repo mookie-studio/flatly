@@ -1,6 +1,7 @@
 using Flatly.Api.Data;
 using Flatly.Api.Modules.Platform.Endpoints;
 using Flatly.Api.Validation;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Flatly.Api.Modules.Platform;
 
@@ -14,6 +15,8 @@ public static class PlatformModule
     public static IServiceCollection AddPlatformModule(this IServiceCollection services)
     {
         services.AddFlatlyDatabase();
+        // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.
+        services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IRequestValidator<ValidationSampleRequest>, ValidationSampleRequestValidator>();
         return services;
     }
@@ -23,7 +26,8 @@ public static class PlatformModule
     {
         app.MapGroup(RoutePrefix)
             .WithTags("Platform")
-            .MapValidationSample();
+            .MapValidationSample()
+            .MapClockSample();
         return app;
     }
 }
