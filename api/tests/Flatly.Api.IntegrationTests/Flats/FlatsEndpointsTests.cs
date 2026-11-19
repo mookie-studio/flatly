@@ -472,6 +472,102 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         Assert.Equal(HttpStatusCode.OK, (await brunoClient.GetAsync($"{FlatsUrl}/{flat.Id}")).StatusCode);
     }
 
+    [SkippableFact]
+    public async Task AnAdminCanPromoteAMemberAndTheListShowsTheNewRole()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "role-ana");
+        var bruno = await CreateAccountAsync(factory, "role-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Promote flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+        var brunoId = (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).UserId;
+
+        var response = await anaClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}/members/{brunoId}", new ChangeMemberRoleRequest("Admin"));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(MemberRole.Admin, (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).Role);
+        var members = await anaClient.GetFromJsonAsync<List<FlatMemberResponse>>($"{FlatsUrl}/{flat.Id}/members");
+        Assert.Equal(["Admin", "Admin"], members!.Select(member => member.Role));
+    }
+
+    [SkippableFact]
+    public async Task AnAdminCanDemoteAnotherAdminWhileAnotherAdminRemains()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "demote-ana");
+        var bruno = await CreateAccountAsync(factory, "demote-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Demote flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Admin);
+        var brunoId = (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).UserId;
+
+        var response = await anaClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}/members/{brunoId}", new ChangeMemberRoleRequest("Member"));
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(MemberRole.Member, (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).Role);
+    }
+
+    [SkippableFact]
+    public async Task TheSoleAdminCannotBeDemotedUntilAnotherMemberIsPromoted()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "sole-ana");
+        var bruno = await CreateAccountAsync(factory, "sole-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Sole admin flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+        var anaId = (await FindMembershipAsync(factory, flat.Id, ana.Provider, ana.Subject)).UserId;
+
+        var demote = await anaClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}/members/{anaId}", new ChangeMemberRoleRequest("Member"));
+
+        Assert.Equal(HttpStatusCode.Conflict, demote.StatusCode);
+        Assert.Equal(MemberRole.Admin, (await FindMembershipAsync(factory, flat.Id, ana.Provider, ana.Subject)).Role);
+    }
+
+    [SkippableFact]
+    public async Task AMemberCannotChangeRoles()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "role-owner");
+        var bruno = await CreateAccountAsync(factory, "role-member-bruno");
+        var carla = await CreateAccountAsync(factory, "role-member-carla");
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await factory.CreateSignedInClient(ana).PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("No role changes")))
+            .Content.ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+        await AddMemberAsync(factory, flat.Id, carla, MemberRole.Member);
+        var carlaId = (await FindMembershipAsync(factory, flat.Id, carla.Provider, carla.Subject)).UserId;
+
+        var response = await brunoClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}/members/{carlaId}", new ChangeMemberRoleRequest("Admin"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(MemberRole.Member, (await FindMembershipAsync(factory, flat.Id, carla.Provider, carla.Subject)).Role);
+    }
+
+    [SkippableFact]
+    public async Task AnInvalidRoleAndAnUnknownMemberAreRejected()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "role-invalid-ana");
+        var bruno = await CreateAccountAsync(factory, "role-invalid-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Invalid role flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+        var brunoId = (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).UserId;
+
+        var invalid = await anaClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}/members/{brunoId}", new ChangeMemberRoleRequest("Owner"));
+        var unknown = await anaClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}/members/{Guid.NewGuid()}", new ChangeMemberRoleRequest("Admin"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        Assert.Equal(MemberRole.Member, (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).Role);
+    }
+
     private static async Task<FakeExternalAccount> CreateAccountAsync(FlatlyApiFactory factory, string name)
     {
         var account = new FakeExternalAccount(ExternalProviders.Google, $"{name}-{Guid.NewGuid():N}", $"{name}@example.com", name);
