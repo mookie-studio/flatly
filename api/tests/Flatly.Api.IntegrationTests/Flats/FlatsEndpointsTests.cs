@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Flatly.Api.Data;
+using Flatly.Api.Data.Tenancy;
 using Flatly.Api.IntegrationTests.Fakes;
 using Flatly.Api.IntegrationTests.Infrastructure;
 using Flatly.Api.Modules.Flats.Domain;
@@ -130,9 +131,34 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Ana only"))).Content
             .ReadFromJsonAsync<FlatResponse>();
 
-        var response = await brunoClient.GetAsync($"{FlatsUrl}/{anasFlat!.Id}");
+        await FlatIsolation.AssertNotFoundForNonMemberAsync(brunoClient, anasFlat!.Id, id => $"{FlatsUrl}/{id}");
+    }
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    [SkippableFact]
+    public async Task TheFlatFilterReturnsOnlyRowsOfTheFlatInScope()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "scope-ana");
+        var bruno = await CreateAccountAsync(factory, "scope-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Scope A"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var brunosFlat = await (await brunoClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Scope B"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
+        var currentFlat = scope.ServiceProvider.GetRequiredService<CurrentFlat>();
+
+        // No flat in scope: a query that forgot its flat sees nothing, not every flat's rows.
+        Assert.Empty(await database.Memberships.Select(membership => membership.FlatId).ToListAsync());
+
+        currentFlat.Id = anasFlat!.Id;
+        Assert.Equal(new[] { anasFlat.Id }, await database.Memberships.Select(membership => membership.FlatId).ToListAsync());
+
+        currentFlat.Id = brunosFlat!.Id;
+        Assert.Equal(new[] { brunosFlat.Id }, await database.Memberships.Select(membership => membership.FlatId).ToListAsync());
     }
 
     [SkippableFact]
@@ -177,7 +203,9 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         await using var scope = factory.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
         var login = await database.UserLogins.SingleAsync(item => item.LoginProvider == provider && item.ProviderKey == subject);
-        return await database.Memberships.SingleAsync(membership => membership.FlatId == flatId && membership.UserId == login.UserId);
+        // Test setup reads across flats, so it bypasses the flat filter on purpose.
+        return await database.Memberships.IgnoreQueryFilters()
+            .SingleAsync(membership => membership.FlatId == flatId && membership.UserId == login.UserId);
     }
 
     private static async Task LeaveFlatAsync(FlatlyApiFactory factory, Guid flatId, FakeExternalAccount account)
@@ -185,7 +213,8 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         await using var scope = factory.Services.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
         var login = await database.UserLogins.SingleAsync(item => item.LoginProvider == account.Provider && item.ProviderKey == account.Subject);
-        var membership = await database.Memberships.SingleAsync(item => item.FlatId == flatId && item.UserId == login.UserId);
+        var membership = await database.Memberships.IgnoreQueryFilters()
+            .SingleAsync(item => item.FlatId == flatId && item.UserId == login.UserId);
         membership.LeftAt = Start;
         await database.SaveChangesAsync();
     }

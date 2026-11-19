@@ -84,7 +84,15 @@ The migration `Initial` is empty. `AddIdentity` creates the account tables: `use
 
 `Modules/Flats` holds the tenant of the product (ADR-002). A flat has a name and a creation time. A membership links a user to a flat with a role (`Admin` or `Member`), a join time and an optional leave time. Leaving keeps the row. The creator of a flat becomes its admin.
 
-The endpoints are `POST /api/v1/flats`, `GET /api/v1/flats` (the caller's active flats) and `GET /api/v1/flats/{flatId}`. A flat the caller does not belong to answers 404. Tenant scoping for other modules is added by the next task (#76).
+The endpoints are `POST /api/v1/flats`, `GET /api/v1/flats` (the caller's active flats) and `GET /api/v1/flats/{flatId}`. A flat the caller does not belong to answers 404.
+
+### Tenant scoping (flat route)
+
+Endpoints that read or change one flat's data go under `/{flatId}` with `MapFlatScope()` (`Modules/Flats/Scope`). The filter there checks that the signed-in account has an active membership, sets `CurrentFlat` for the request, and answers 401 without a sign-in or 404 for any other flat (ADR-002).
+
+Every entity that belongs to a flat implements `IFlatScoped` and gets one line in `FlatlyDbContext.OnModelCreating` (`FilterByCurrentFlat<T>`). Its query filter returns rows only for the flat in `CurrentFlat`; with no flat in scope it returns nothing. `ListMyFlats` is the one query that ignores the filter on purpose, because it lists the caller's memberships across flats.
+
+Tests: `FlatScopeModelTests` (unit) fails when a flat-scoped entity has no filter. `FlatIsolation.AssertNotFoundForNonMemberAsync` (integration) is the shared check that a non-member gets 404; each new flat-scoped endpoint test calls it.
 
 Endpoints identify the caller with `CurrentAccountResolver` (`Modules/Platform/Identity`). It reads the provider and subject from the signed-in principal and returns 401 when nobody is signed in. Production has no authentication middleware yet, so these endpoints answer 401 until the sign-in task adds it. The integration tests add the middleware and sign in with the fake provider (`FlatlyApiFactory.CreateSignedInClient`).
 

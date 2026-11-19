@@ -33,7 +33,9 @@ public static class ListMyFlatsEndpoint
             return TypedResults.Unauthorized();
         }
 
-        var rows = await database.Memberships.AsNoTracking()
+        // The caller's memberships in every flat, so this is the one query that ignores the flat filter on purpose (ADR-002).
+        // The user filter keeps it to the caller's own rows.
+        var rows = await database.Memberships.IgnoreQueryFilters().AsNoTracking()
             .Where(membership => membership.UserId == account.Id && membership.LeftAt == null)
             .Join(
                 database.Flats.AsNoTracking(),

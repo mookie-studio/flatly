@@ -1,4 +1,5 @@
 using Flatly.Api.Data;
+using Flatly.Api.Data.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -38,7 +39,7 @@ public sealed class DatabaseConventionsTests
     }
 
     /// <summary>Test-only context with one entity, so the conventions can be checked before any real table exists.</summary>
-    private sealed class ProbeContext(DbContextOptions options) : FlatlyDbContext(options)
+    private sealed class ProbeContext(DbContextOptions options) : FlatlyDbContext(options, new CurrentFlat())
     {
         public DbSet<ProbeEntity> Probes => Set<ProbeEntity>();
     }

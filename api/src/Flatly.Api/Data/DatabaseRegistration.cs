@@ -11,9 +11,14 @@ public static class DatabaseRegistration
     /// </summary>
     public const string ConnectionName = "flatly";
 
-    /// <summary>Registers <see cref="FlatlyDbContext"/> on PostgreSQL with snake_case column names.</summary>
-    public static IServiceCollection AddFlatlyDatabase(this IServiceCollection services) =>
-        services.AddDbContext<FlatlyDbContext>((serviceProvider, options) =>
+    /// <summary>
+    /// Registers <see cref="FlatlyDbContext"/> on PostgreSQL with snake_case column names, and the per-request
+    /// <see cref="Tenancy.CurrentFlat"/> that its flat filter reads.
+    /// </summary>
+    public static IServiceCollection AddFlatlyDatabase(this IServiceCollection services)
+    {
+        services.AddScoped<Tenancy.CurrentFlat>();
+        return services.AddDbContext<FlatlyDbContext>((serviceProvider, options) =>
         {
             var connectionString = serviceProvider.GetRequiredService<IConfiguration>()
                 .GetConnectionString(ConnectionName)
@@ -21,6 +26,7 @@ public static class DatabaseRegistration
 
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention();
         });
+    }
 
     /// <summary>Applies every pending migration. Used by the <c>migrate</c> command and, in development, at startup.</summary>
     public static async Task MigrateDatabaseAsync(this IHost host)
