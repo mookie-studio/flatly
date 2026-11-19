@@ -139,6 +139,15 @@ Notifications send email through `IEmailSender` (`Modules/Platform/Email`). Feat
 - **Settings** (section `Email`): `Provider` (`Smtp` or `Resend`), `FromAddress`, `FromName`, `Smtp:Host`, `Smtp:Port`, `Smtp:EnableSsl`, `Smtp:UserName`, `Smtp:Password`, `Resend:ApiKey`, `Resend:BaseUrl`. A missing sender address, an unknown provider or a missing Resend key stops the API at startup.
 - **Templates**: `EmailTemplates.Notification` renders a notification in Spanish or English from the member's `preferred_language`. Unknown or missing languages fall back to Spanish.
 
+## Background jobs and reminders
+
+Scheduled work runs on Hangfire with PostgreSQL storage (`Modules/Platform/Scheduling`). Features schedule reminders through `IReminderScheduler` and never reference Hangfire. `Schedule(reminderId, deliverAt)` returns a job id, and `Cancel(jobId)` removes the job.
+
+- **Survives restarts**: Hangfire keeps scheduled jobs in the `hangfire` schema of the same database. It creates that schema on first start, so no EF migration is involved. `ReminderSchedulingTests` restarts the host and checks that the job is still there.
+- **Single instance**: the Hangfire server runs inside the API process, so one App Service instance runs the jobs. Scaling out to several instances would need a review of that choice.
+- **Dashboard**: `/hangfire` is served in Development only, and the filter refuses it elsewhere. Production has no platform admin role yet, so the dashboard is not served there at all.
+- **Delivery**: `ReminderJobs.DeliverAsync` only logs for now. The notifications issue (#62) replaces the log with the delivery.
+
 ## Errors and validation
 
 Every error answers `application/problem+json` (RFC 9457 ProblemDetails):
