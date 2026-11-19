@@ -1,5 +1,6 @@
 using Flatly.Api.Data;
 using Flatly.Api.Modules.Platform.Endpoints;
+using Flatly.Api.Modules.Platform.Identity;
 using Flatly.Api.Validation;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -15,6 +16,16 @@ public static class PlatformModule
     public static IServiceCollection AddPlatformModule(this IServiceCollection services)
     {
         services.AddFlatlyDatabase();
+        // ASP.NET Core Identity stores accounts and external logins. Passwordless: Google and Microsoft are the only
+        // ways in (ADR-003), so no password or email confirmation is configured. The cookie session comes later.
+        services.AddIdentityCore<FlatlyUser>(options =>
+            {
+                options.User.RequireUniqueEmail = false;
+                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedEmail = false;
+            })
+            .AddEntityFrameworkStores<FlatlyDbContext>();
+        services.AddScoped<ExternalAccountService>();
         // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IRequestValidator<ValidationSampleRequest>, ValidationSampleRequestValidator>();

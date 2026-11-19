@@ -78,7 +78,11 @@ The connection string is `ConnectionStrings:flatly`. Aspire injects it from the 
 
 - Migrations are additive only, so the previous version keeps working on the new schema (see [ADR-001](../docs/adr/0001-stack-and-deployment.md)).
 
-The first migration, `Initial`, is empty: the context has no tables yet. The feature tasks add their entities and their migrations.
+The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. The feature tasks add their entities and their migrations.
+
+### Accounts
+
+Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. The sign-in endpoints and the cookie session are added by their own tasks.
 
 ## Module convention
 
