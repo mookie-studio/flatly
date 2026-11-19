@@ -1,0 +1,81 @@
+# Checks that relative markdown links in README.md and docs/ resolve to files
+# or directories in the repository. External URLs and in-page anchors are not
+# checked here, to keep the check deterministic and free of network flakiness.
+name: Docs links
+
+on:
+  pull_request:
+    paths:
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/docs-links.yml"
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**"
+      - ".github/workflows/docs-links.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-links:
+    name: Check relative links in docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Check relative markdown links
+        run: |
+          python3 - <<'PYEOF'
+          import os
+          import pathlib
+          import re
+          import sys
+          import urllib.parse
+
+          root = pathlib.Path(".").resolve()
+          files = [root / "README.md", *sorted((root / "docs").rglob("*.md"))]
+          link_re = re.compile(r'!?\[[^\]]*\]\(\s*<?([^)\s>]+)>?(?:\s+"[^"]*")?\s*\)')
+          fence_re = re.compile(r"^\s*(```|~~~)")
+          scheme_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9+.-]*:")
+
+          checked = 0
+          broken = []
+          for path in files:
+              if not path.is_file():
+                  continue
+              in_fence = False
+              for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                  if fence_re.match(line):
+                      in_fence = not in_fence
+                      continue
+                  if in_fence:
+                      continue
+                  for match in link_re.finditer(line):
+                      target = match.group(1)
+                      if scheme_re.match(target) or target.startswith("#"):
+                          continue  # external URLs, mailto: and same-page anchors
+                      target_path = urllib.parse.unquote(target.split("#", 1)[0].split("?", 1)[0])
+                      if not target_path:
+                          continue
+                      if target_path.startswith("/"):
+                          resolved = root / target_path.lstrip("/")
+                      else:
+                          resolved = path.parent / target_path
+                      checked += 1
+                      if not os.path.exists(resolved):
+                          broken.append(f"{path.relative_to(root)}:{lineno}: {target}")
+
+          print(f"Checked {checked} relative links in {len(files)} markdown files.")
+          if broken:
+              print("Broken links:")
+              for entry in broken:
+                  print(f"  {entry}")
+              sys.exit(1)
+          print("All relative links resolve.")
+          PYEOF
