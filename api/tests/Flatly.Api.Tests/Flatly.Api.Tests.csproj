@@ -16,6 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- HttpContext and endpoint filter types for handler tests; no package needed. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../../src/Flatly.Api/Flatly.Api.csproj" />
   </ItemGroup>
 
