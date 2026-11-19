@@ -1,0 +1,53 @@
+import { render, screen } from '@testing-library/react'
+import { RouterProvider } from 'react-router/dom'
+import { AuthContext, type AuthState } from './auth/auth-context'
+import { createTestRouter } from './router'
+
+function renderAt(path: string, auth: AuthState) {
+  const router = createTestRouter(path)
+  render(
+    <AuthContext.Provider value={auth}>
+      <RouterProvider router={router} />
+    </AuthContext.Provider>,
+  )
+  return router
+}
+
+describe('routing', () => {
+  it('redirects an anonymous visit to a protected route to login', async () => {
+    const router = renderAt('/', { status: 'anonymous' })
+
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/login')
+    expect(new URLSearchParams(router.state.location.search).get('redirect')).toBe('/')
+  })
+
+  it('keeps path, query and hash of the intended destination in the redirect', async () => {
+    const router = renderAt('/rooms/42?tab=week#today', { status: 'anonymous' })
+
+    await screen.findByRole('heading', { name: 'Log in' })
+    expect(new URLSearchParams(router.state.location.search).get('redirect')).toBe(
+      '/rooms/42?tab=week#today',
+    )
+  })
+
+  it('renders protected routes for an authenticated visitor', async () => {
+    const router = renderAt('/', { status: 'authenticated', userId: 'user-1' })
+
+    expect(await screen.findByRole('heading', { name: 'Home' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/')
+  })
+
+  it('renders the public login page without a session and without redirecting', async () => {
+    const router = renderAt('/login', { status: 'anonymous' })
+
+    expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/login')
+  })
+
+  it('renders the not-found page inside the app for unknown paths when authenticated', async () => {
+    renderAt('/does-not-exist', { status: 'authenticated', userId: 'user-1' })
+
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+  })
+})
