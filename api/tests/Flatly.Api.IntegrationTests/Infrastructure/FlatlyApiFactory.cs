@@ -37,6 +37,8 @@ public sealed class FlatlyApiFactory(string connectionString, DateTimeOffset now
         // Google is configured, so the sign-in endpoint can redirect to it. The provider itself is never called in tests.
         builder.UseSetting("Authentication:Google:ClientId", "test-google-client");
         builder.UseSetting("Authentication:Google:ClientSecret", "test-google-secret");
+        builder.UseSetting("Authentication:Microsoft:ClientId", "test-microsoft-client");
+        builder.UseSetting("Authentication:Microsoft:ClientSecret", "test-microsoft-secret");
         builder.UseSetting("Web:Origin", "https://web.test");
         builder.ConfigureTestServices(services =>
         {

@@ -4,6 +4,7 @@ using Flatly.Api.Modules.Platform.Endpoints;
 using Flatly.Api.Modules.Platform.Identity;
 using Flatly.Api.Validation;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -55,16 +56,19 @@ public static class PlatformModule
     }
 
     /// <summary>
-    /// Google sign-in, the cookie session and default-deny authorization. Every endpoint requires a signed-in member
-    /// unless it says <c>AllowAnonymous</c>; that is the only way to make an endpoint public.
+    /// Google and Microsoft sign-in, the cookie session and default-deny authorization. Every endpoint requires a signed-in
+    /// member unless it says <c>AllowAnonymous</c>; that is the only way to make an endpoint public.
     /// </summary>
     private static void ConfigureSignIn(IServiceCollection services)
     {
         services.AddAuthentication(SessionAuthentication.Scheme)
             .AddCookie(SessionAuthentication.Scheme, SessionAuthentication.ConfigureCookie)
-            .AddGoogle();
+            .AddGoogle()
+            .AddMicrosoftAccount();
         services.AddOptions<GoogleOptions>(GoogleDefaults.AuthenticationScheme)
             .Configure<IConfiguration>(GoogleSignIn.Configure);
+        services.AddOptions<MicrosoftAccountOptions>(MicrosoftAccountDefaults.AuthenticationScheme)
+            .Configure<IConfiguration>(MicrosoftSignIn.Configure);
 
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
