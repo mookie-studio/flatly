@@ -1,4 +1,5 @@
 using Flatly.Api.Modules.Flats.Domain;
+using Flatly.Api.Modules.Flats.Invites;
 using Flatly.Api.Modules.Platform.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,13 @@ public static class FlatsModelConfiguration
             flat.ToTable("flats");
             flat.Property(f => f.Name).HasMaxLength(MaxNameLength).IsRequired();
             flat.Property(f => f.CreatedAt).IsRequired();
+            flat.Property(f => f.InviteCode).HasMaxLength(InviteCodes.Length);
+            flat.Property(f => f.InviteCodeExpiresAt);
+            // Codes are unique among flats. Flats without a code (null) do not take part in the check.
+            flat.HasIndex(f => f.InviteCode)
+                .IsUnique()
+                .HasFilter("invite_code is not null")
+                .HasDatabaseName("ux_flats_invite_code");
         });
 
         builder.Entity<Membership>(membership =>
