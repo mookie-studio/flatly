@@ -1,3 +1,6 @@
+import { useTranslation } from 'react-i18next'
+
 export function Home() {
-  return <h1>Home</h1>
+  const { t } = useTranslation('home')
+  return <h1>{t('title')}</h1>
 }

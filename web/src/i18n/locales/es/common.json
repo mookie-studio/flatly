@@ -1,0 +1,10 @@
+{
+  "language": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "status": {
+    "loading": "Cargando…"
+  }
+}
