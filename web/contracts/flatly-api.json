@@ -352,6 +352,64 @@
           }
         }
       }
+    },
+    "/api/v1/platform/account": {
+      "delete": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Deletes the signed-in member's account. The member leaves every flat, and their name shows as a former member there. The last admin of a flat with other members cannot delete the account (409). Requires the antiforgery token in the X-XSRF-TOKEN header.",
+        "operationId": "DeleteAccount",
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "description": "Antiforgery token, from `GET /api/v1/platform/auth/antiforgery-token`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The account was deleted."
+          },
+          "400": {
+            "description": "The antiforgery token is missing or invalid."
+          },
+          "401": {
+            "description": "No signed-in account."
+          },
+          "409": {
+            "description": "The member is the last admin of a flat with other members. The problem lists those flats."
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account/export": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Returns the signed-in member's data: their profile and every flat membership, active or left.",
+        "operationId": "ExportAccount",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountExportResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No signed-in account."
+          }
+        }
+      }
     }
   },
   "components": {
@@ -600,6 +658,110 @@
             "description": "The antiforgery request token."
           }
         }
+      },
+      "AccountMembershipExport": {
+        "required": [
+          "flatId",
+          "flatName",
+          "role",
+          "joinedAt",
+          "leftAt"
+        ],
+        "type": "object",
+        "properties": {
+          "flatId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "flatName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "`Admin` or `Member`."
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the member joined, in UTC."
+          },
+          "leftAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time",
+            "description": "When the member left, in UTC, or null while the membership is active."
+          }
+        },
+        "description": "One membership of the member, active or left, in a flat."
+      },
+      "AccountProfileExport": {
+        "required": [
+          "displayName",
+          "email",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email the sign-in provider reported, or null."
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "preferredLanguage": {
+            "type": "string"
+          },
+          "timeZoneId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the account was created, in UTC."
+          }
+        },
+        "description": "The profile part of the account export."
+      },
+      "AccountExportResponse": {
+        "required": [
+          "exportedAt",
+          "profile",
+          "memberships"
+        ],
+        "type": "object",
+        "properties": {
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the export was made, in UTC."
+          },
+          "profile": {
+            "$ref": "#/components/schemas/AccountProfileExport"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountMembershipExport"
+            },
+            "description": "Every flat the member has been in, oldest first."
+          }
+        },
+        "description": "The data export of the signed-in member."
       }
     }
   },
