@@ -280,6 +280,78 @@
           }
         }
       }
+    },
+    "/api/v1/platform/auth/session": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "The signed-in member. Returns 401 when there is no session.",
+        "operationId": "GetSession",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/antiforgery-token": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Issues the antiforgery token that state-changing requests send in the X-XSRF-TOKEN header.",
+        "operationId": "GetAntiforgeryToken",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AntiforgeryTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Ends the session. Requires the antiforgery token in the X-XSRF-TOKEN header.",
+        "operationId": "SignOut",
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -480,6 +552,54 @@
           }
         },
         "description": "Request of the sample endpoint that demonstrates field-keyed validation errors."
+      },
+      "SessionResponse": {
+        "type": "object",
+        "required": [
+          "userId",
+          "displayName",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId"
+        ],
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Flatly account id."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name shown to the other members of a flat."
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Picture URL, or null."
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Interface language, es or en."
+          },
+          "timeZoneId": {
+            "type": "string",
+            "description": "IANA time zone identifier."
+          }
+        }
+      },
+      "AntiforgeryTokenResponse": {
+        "type": "object",
+        "required": [
+          "requestToken"
+        ],
+        "properties": {
+          "requestToken": {
+            "type": "string",
+            "description": "The antiforgery request token."
+          }
+        }
       }
     }
   },
