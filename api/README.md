@@ -98,9 +98,10 @@ Endpoints identify the caller with `CurrentAccountResolver` (`Modules/Platform/I
 
 ### Accounts
 
-Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. Sign-in is Google only for now. The endpoints live in `Modules/Platform/Endpoints/AuthEndpoints.cs`:
+Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. Sign-in works with Google and Microsoft. Microsoft uses the `common` tenant, so work, school and personal accounts (Outlook, Hotmail, Live) all sign in. The endpoints live in `Modules/Platform/Endpoints/AuthEndpoints.cs`:
 
 - `GET /api/v1/platform/auth/google/sign-in?returnUrl=` starts the Google sign-in (the provider's callback is `/signin-google`). `returnUrl` may only point to the web origin (`Web:Origin`); anything else goes to its home page.
+- `GET /api/v1/platform/auth/microsoft/sign-in?returnUrl=` starts the Microsoft sign-in (the provider's callback is `/signin-microsoft`). It follows the same `returnUrl` rule as Google.
 - `GET /api/v1/platform/auth/session` returns the signed-in member, or 401.
 - `GET /api/v1/platform/auth/antiforgery-token` issues the token that every state-changing request sends in the `X-XSRF-TOKEN` header. `POST /api/v1/platform/auth/sign-out` requires it.
 

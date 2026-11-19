@@ -43,6 +43,11 @@
         "resolved": "10.0.15",
         "contentHash": "MzNCejdzgicRQOpGNv38p5QjrzUlK9aLaLOfC2J919RvLeswY4yoTZtOEfZnwuWKrJPOlyn8cXbSnUgBYPDPoQ=="
       },
+      "Microsoft.AspNetCore.Authentication.MicrosoftAccount": {
+        "type": "Transitive",
+        "resolved": "10.0.15",
+        "contentHash": "RDi99rbcD0Ri8nS5KfzzBAiRbvb2rP+RuhFj0zBt+q4ZCOwb+C9mn831yGCNQli9eczVzOFyZB6ql5mMt7TuYQ=="
+      },
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
         "type": "Transitive",
         "resolved": "10.0.15",
@@ -336,6 +341,7 @@
           "EFCore.NamingConventions": "[10.0.1, )",
           "Flatly.ServiceDefaults": "[1.0.0, )",
           "Microsoft.AspNetCore.Authentication.Google": "[10.0.15, )",
+          "Microsoft.AspNetCore.Authentication.MicrosoftAccount": "[10.0.15, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.15, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.15, )",
           "Microsoft.EntityFrameworkCore": "[10.0.15, )",

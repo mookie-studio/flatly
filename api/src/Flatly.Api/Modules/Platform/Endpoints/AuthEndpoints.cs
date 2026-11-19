@@ -4,6 +4,7 @@ using Flatly.Api.Modules.Platform.Identity;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -39,6 +40,14 @@ public static class AuthEndpoints
             .AllowAnonymous()
             .WithName("SignInWithGoogle")
             .WithSummary("Starts the Google sign-in. Redirects to Google, then back to the web app with the session cookie set.");
+
+        group.MapGet("/auth/microsoft/sign-in", (string? returnUrl, IConfiguration configuration) =>
+                Results.Challenge(
+                    new AuthenticationProperties { RedirectUri = ReturnUrl.Resolve(returnUrl, configuration[GoogleSignIn.WebOriginKey]) },
+                    [MicrosoftAccountDefaults.AuthenticationScheme]))
+            .AllowAnonymous()
+            .WithName("SignInWithMicrosoft")
+            .WithSummary("Starts the Microsoft sign-in, for work, school and personal accounts. Redirects to Microsoft, then back to the web app with the session cookie set.");
 
         group.MapGet("/auth/session", async (ClaimsPrincipal principal, UserManager<FlatlyUser> users) =>
             {

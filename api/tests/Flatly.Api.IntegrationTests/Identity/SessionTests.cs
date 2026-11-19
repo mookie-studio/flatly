@@ -24,6 +24,7 @@ public sealed class SessionTests(PostgresContainer postgres)
     private const string SignOutUrl = "/api/v1/platform/auth/sign-out";
     private const string AntiforgeryTokenUrl = "/api/v1/platform/auth/antiforgery-token";
     private const string GoogleSignInUrl = "/api/v1/platform/auth/google/sign-in?returnUrl=/flats";
+    private const string MicrosoftSignInUrl = "/api/v1/platform/auth/microsoft/sign-in?returnUrl=/flats";
     private const string ClockUrl = "/api/v1/platform/clock-sample";
     private static readonly Uri SecureBase = new("https://localhost");
 
@@ -44,7 +45,7 @@ public sealed class SessionTests(PostgresContainer postgres)
         await using var factory = await CreateFactoryAsync();
         using var client = CreateClient(factory, allowRedirects: false);
 
-        foreach (var url in new[] { "/health", "/openapi/v1.json", ClockUrl, AntiforgeryTokenUrl, GoogleSignInUrl })
+        foreach (var url in new[] { "/health", "/openapi/v1.json", ClockUrl, AntiforgeryTokenUrl, GoogleSignInUrl, MicrosoftSignInUrl })
         {
             var response = await client.GetAsync(url);
             Assert.False(response.StatusCode == HttpStatusCode.Unauthorized, $"{url} requires a session");
@@ -118,6 +119,19 @@ public sealed class SessionTests(PostgresContainer postgres)
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.StartsWith("https://accounts.google.com/", response.Headers.Location!.AbsoluteUri, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task MicrosoftSignInRedirectsToMicrosoftForAllAccountTypes()
+    {
+        await using var factory = await CreateFactoryAsync();
+        using var client = CreateClient(factory, allowRedirects: false);
+
+        var response = await client.GetAsync(MicrosoftSignInUrl);
+
+        // The common tenant lets work, school and personal (Outlook, Hotmail, Live) accounts sign in.
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.StartsWith("https://login.microsoftonline.com/common/oauth2/v2.0/authorize", response.Headers.Location!.AbsoluteUri, StringComparison.Ordinal);
     }
 
     private static string NewSubject() => Guid.NewGuid().ToString("N");
