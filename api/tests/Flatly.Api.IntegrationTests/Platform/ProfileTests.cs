@@ -178,12 +178,7 @@ public sealed class ProfileTests(PostgresContainer postgres)
         Assert.True(problem!.Errors.ContainsKey(field), $"Expected a validation error for '{field}'.");
     }
 
-    private static HttpClient Client(FlatlyApiFactory factory, FakeExternalAccount account)
-    {
-        var client = factory.CreateClient();
-        client.DefaultRequestHeaders.Add(FakeExternalAuthenticationHandler.TicketHeader, factory.ExternalSignIn.SignIn(account));
-        return client;
-    }
+    private static HttpClient Client(FlatlyApiFactory factory, FakeExternalAccount account) => factory.CreateSignedInClient(account);
 
     /// <summary>Creates the account behind a fake provider sign-in and returns the fake account that signs in as it.</summary>
     private static async Task<FakeExternalAccount> SignInAsync(FlatlyApiFactory factory, string name)

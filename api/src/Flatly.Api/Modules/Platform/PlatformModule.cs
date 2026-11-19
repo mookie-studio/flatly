@@ -27,9 +27,7 @@ public static class PlatformModule
             })
             .AddEntityFrameworkStores<FlatlyDbContext>();
         services.AddScoped<ExternalAccountService>();
-        // Authentication services without a default scheme: the sign-in task configures the scheme that signs members in.
-        services.AddAuthentication();
-        services.AddScoped<CurrentMemberResolver>();
+        services.AddScoped<CurrentAccountResolver>();
         services.AddSingleton<IRequestValidator<UpdateProfileRequest>, UpdateProfileRequestValidator>();
         // Notification emails go through IEmailSender: SMTP locally, Resend in deployment (see api/README.md).
         services.AddEmailSender();

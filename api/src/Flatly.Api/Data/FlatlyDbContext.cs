@@ -1,3 +1,5 @@
+using Flatly.Api.Modules.Flats.Data;
+using Flatly.Api.Modules.Flats.Domain;
 using Flatly.Api.Modules.Platform.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -7,11 +9,17 @@ namespace Flatly.Api.Data;
 
 /// <summary>
 /// The application's single PostgreSQL context. It holds the ASP.NET Core Identity tables for accounts and their
-/// external logins. Other tables are added by the feature tasks that need them.
+/// external logins, and the flats and their memberships. Other tables are added by the feature tasks that need them.
 /// Column names are snake_case (see <see cref="DatabaseRegistration"/>), and every timestamp is a UTC <c>timestamptz</c>.
 /// </summary>
 public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
 {
+    /// <summary>Flats, the tenants of the product (ADR-002).</summary>
+    public DbSet<Flat> Flats => Set<Flat>();
+
+    /// <summary>Who belongs to which flat, with the role and the join and leave dates.</summary>
+    public DbSet<Membership> Memberships => Set<Membership>();
+
     /// <summary>Creates the context with the options registered by the host.</summary>
     public FlatlyDbContext(DbContextOptions<FlatlyDbContext> options) : base(options)
     {
@@ -52,5 +60,6 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
         builder.Entity<IdentityUserLogin<Guid>>().ToTable("user_logins");
         builder.Entity<IdentityUserClaim<Guid>>().ToTable("user_claims");
         builder.Entity<IdentityUserToken<Guid>>().ToTable("user_tokens");
+        FlatsModelConfiguration.Configure(builder);
     }
 }

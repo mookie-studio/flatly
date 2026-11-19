@@ -22,6 +22,78 @@ namespace Flatly.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Flatly.Api.Modules.Flats.Domain.Flat", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_flats");
+
+                    b.ToTable("flats", (string)null);
+                });
+
+            modelBuilder.Entity("Flatly.Api.Modules.Flats.Domain.Membership", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("FlatId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("flat_id");
+
+                    b.Property<DateTimeOffset>("JoinedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("joined_at");
+
+                    b.Property<DateTimeOffset?>("LeftAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("left_at");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("role");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_memberships");
+
+                    b.HasIndex("FlatId")
+                        .HasDatabaseName("ix_memberships_flat_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_memberships_user_id");
+
+                    b.HasIndex("FlatId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_memberships_active_flat_user")
+                        .HasFilter("left_at is null");
+
+                    b.ToTable("memberships", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_memberships_role", "role in ('Admin', 'Member')");
+                        });
+                });
+
             modelBuilder.Entity("Flatly.Api.Modules.Platform.Identity.FlatlyUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -212,6 +284,23 @@ namespace Flatly.Api.Data.Migrations
                         .HasName("pk_user_tokens");
 
                     b.ToTable("user_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Flatly.Api.Modules.Flats.Domain.Membership", b =>
+                {
+                    b.HasOne("Flatly.Api.Modules.Flats.Domain.Flat", null)
+                        .WithMany()
+                        .HasForeignKey("FlatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_memberships_flats_flat_id");
+
+                    b.HasOne("Flatly.Api.Modules.Platform.Identity.FlatlyUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_memberships_users_user_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>

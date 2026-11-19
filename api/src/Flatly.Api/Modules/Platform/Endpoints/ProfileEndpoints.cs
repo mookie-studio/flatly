@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Flatly.Api.Modules.Platform.Identity;
 using Flatly.Api.Validation;
 using Microsoft.AspNetCore.Builder;
@@ -88,22 +89,22 @@ public static class ProfileEndpoints
     }
 
     private static async Task<Results<Ok<ProfileResponse>, UnauthorizedHttpResult>> GetProfile(
-        HttpContext httpContext,
-        CurrentMemberResolver members,
+        ClaimsPrincipal principal,
+        CurrentAccountResolver accounts,
         CancellationToken cancellationToken)
     {
-        var member = await members.ResolveAsync(httpContext, cancellationToken);
+        var member = await accounts.FindAsync(principal, cancellationToken);
         return member is null ? TypedResults.Unauthorized() : TypedResults.Ok(ToResponse(member));
     }
 
     private static async Task<Results<Ok<ProfileResponse>, UnauthorizedHttpResult>> UpdateProfile(
         UpdateProfileRequest request,
-        HttpContext httpContext,
-        CurrentMemberResolver members,
+        ClaimsPrincipal principal,
+        CurrentAccountResolver accounts,
         UserManager<FlatlyUser> users,
         CancellationToken cancellationToken)
     {
-        var member = await members.ResolveAsync(httpContext, cancellationToken);
+        var member = await accounts.FindAsync(principal, cancellationToken);
         if (member is null)
         {
             return TypedResults.Unauthorized();
