@@ -4,10 +4,9 @@ using Microsoft.AspNetCore.Identity;
 namespace Flatly.Api.Modules.Platform.Identity;
 
 /// <summary>
-/// Finds the Flatly account of the signed-in request. A provider sign-in puts the provider's subject in the
-/// name identifier claim, with the provider as its issuer (see <see cref="ExternalProviders"/>). The account is
-/// looked up by that pair, the same way <see cref="ExternalAccountService"/> matches accounts.
-/// Returns null when nobody is signed in or the account does not exist yet.
+/// Finds the Flatly account of the signed-in request. The session cookie carries the account id as its name identifier
+/// (see <see cref="SessionAuthentication.PrincipalFor"/>), so the account is looked up by that id.
+/// Returns null when nobody is signed in or the account does not exist.
 /// </summary>
 public sealed class CurrentAccountResolver(UserManager<FlatlyUser> users)
 {
@@ -21,11 +20,11 @@ public sealed class CurrentAccountResolver(UserManager<FlatlyUser> users)
         }
 
         var claim = principal.FindFirst(ClaimTypes.NameIdentifier);
-        if (claim is null || !ExternalProviders.IsSupported(claim.Issuer))
+        if (claim is null || !Guid.TryParse(claim.Value, out var id))
         {
             return null;
         }
 
-        return await users.FindByLoginAsync(claim.Issuer, claim.Value);
+        return await users.FindByIdAsync(id.ToString("D"));
     }
 }

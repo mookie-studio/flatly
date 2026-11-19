@@ -18,6 +18,10 @@ builder.Services.AddFlatlyModules();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+// Authentication before authorization, and both before the endpoints. Every endpoint needs a signed-in member unless it is AllowAnonymous.
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
 app.MapDefaultEndpoints();
 app.MapFlatlyOpenApi();
 app.MapFlatlyModules();

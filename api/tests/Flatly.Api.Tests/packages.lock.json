@@ -38,6 +38,11 @@
           "Microsoft.EntityFrameworkCore.Relational": "[10.0.1, 11.0.0)"
         }
       },
+      "Microsoft.AspNetCore.Authentication.Google": {
+        "type": "Transitive",
+        "resolved": "10.0.15",
+        "contentHash": "MzNCejdzgicRQOpGNv38p5QjrzUlK9aLaLOfC2J919RvLeswY4yoTZtOEfZnwuWKrJPOlyn8cXbSnUgBYPDPoQ=="
+      },
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
         "type": "Transitive",
         "resolved": "10.0.15",
@@ -330,6 +335,7 @@
         "dependencies": {
           "EFCore.NamingConventions": "[10.0.1, )",
           "Flatly.ServiceDefaults": "[1.0.0, )",
+          "Microsoft.AspNetCore.Authentication.Google": "[10.0.15, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.15, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.15, )",
           "Microsoft.EntityFrameworkCore": "[10.0.15, )",
