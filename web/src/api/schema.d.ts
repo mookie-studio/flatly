@@ -88,6 +88,24 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
+        /** Renames a flat. Only an admin of the flat may do it; members get 403. */
+        patch: operations["RenameFlat"];
+        trace?: never;
+    };
+    "/api/v1/flats/{flatId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the active members of a flat, admins first. Members who have left are not listed. */
+        get: operations["ListFlatMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -107,6 +125,25 @@ export interface components {
         CreateFlatRequest: {
             /** @description Required, at most 80 characters. */
             name: null | string;
+        };
+        /** @description An active member of a flat, as seen by the other members. */
+        FlatMemberResponse: {
+            /**
+             * Format: uuid
+             * @description Identifier of the member's account.
+             */
+            userId: string;
+            /** @description Name the member shows in the flat. */
+            displayName: string;
+            /** @description Absolute https URL of the avatar, or null when there is none. */
+            avatarUrl: null | string;
+            /** @description The member's role in the flat: `Admin` or `Member`. */
+            role: string;
+            /**
+             * Format: date-time
+             * @description When the member joined the flat, in UTC.
+             */
+            joinedAt: string;
         };
         /** @description A flat as seen by one of its members. */
         FlatResponse: {
@@ -135,6 +172,11 @@ export interface components {
             preferredLanguage: string;
             /** @description IANA time zone identifier, for example `Europe/Madrid`. */
             timeZoneId: string;
+        };
+        /** @description Request to rename a flat. */
+        UpdateFlatRequest: {
+            /** @description Required, at most 80 characters. */
+            name: null | string;
         };
         /**
          * @description The full profile sent to `PUT profile`. Every field replaces the stored value, so an absent or empty
@@ -310,6 +352,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FlatResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    RenameFlat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                flatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFlatRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlatResponse"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListFlatMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                flatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlatMemberResponse"][];
                 };
             };
             /** @description Not Found */
