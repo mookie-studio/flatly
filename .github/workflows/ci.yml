@@ -1,0 +1,105 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      # Lets the report step create and update its single comment on the pull request.
+      pull-requests: write
+
+    # The API tests start their own PostgreSQL with Testcontainers, on the Docker that GitHub-hosted Ubuntu runners have.
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: api/global.json
+          cache: true
+          cache-dependency-path: "**/packages.lock.json"
+
+      - name: Governance checks
+        # dependency-review needs the Dependency graph turned on in the repository settings
+        # (Settings > Security > Advanced Security). Set it to "true" once it is on.
+        uses: ./.github/actions/net-governance
+        with:
+          working-directory: api
+          dependency-review: "false"
+
+      - name: API contract is up to date
+        # The Release build in the governance step regenerates contracts/Flatly.Api.json.
+        # A different file means an endpoint changed without committing the new contract.
+        run: git diff --exit-code -- contracts
+
+      - name: Docker
+        # The API tests start their PostgreSQL with Testcontainers. Fails here, with a clear message, when the runner
+        # has no Docker that runs Linux containers.
+        run: bash scripts/check-docker.sh
+
+      - name: Test
+        run: >
+          dotnet test --no-build -c Release
+          --filter "Category!=Aspire"
+          --settings tests/coverage.runsettings
+          --collect:"XPlat Code Coverage"
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory "$RUNNER_TEMP/test-results"
+        working-directory: api
+
+      - name: Report
+        # Runs even when the tests fail, because that is when the report matters most.
+        if: ${{ !cancelled() }}
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool || true
+          export PATH="$HOME/.dotnet/tools:$PATH"
+          reportgenerator \
+            "-reports:$RUNNER_TEMP/test-results/**/coverage.cobertura.xml" \
+            "-targetdir:$RUNNER_TEMP/coverage" \
+            "-reporttypes:MarkdownSummaryGithub" || true
+          {
+            echo "## CI report"
+            echo
+            if [ -f "$RUNNER_TEMP/coverage/SummaryGithub.md" ]; then
+              cat "$RUNNER_TEMP/coverage/SummaryGithub.md"
+            else
+              echo "No coverage report was produced. Check the Test step."
+            fi
+          } > "$RUNNER_TEMP/report.md"
+          cat "$RUNNER_TEMP/report.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on the pull request
+        # One comment per pull request, updated on every push. It is skipped when the token cannot write:
+        # pull requests from forks and from Dependabot.
+        if: >-
+          ${{ !cancelled()
+          && github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && github.actor != 'dependabot[bot]' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          marker="<!-- flatly-ci-report -->"
+          { echo "$marker"; cat "$RUNNER_TEMP/report.md"; } > "$RUNNER_TEMP/comment.md"
+          comment_id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" --paginate \
+            --jq "[.[] | select(.body | contains(\"$marker\"))][0].id // empty")
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@"$RUNNER_TEMP/comment.md"
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@"$RUNNER_TEMP/comment.md"
+          fi
