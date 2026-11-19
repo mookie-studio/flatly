@@ -45,3 +45,47 @@ export const useFlatMembers = (flatId: string) =>
     queryFn: () =>
       unwrap(api.GET('/api/v1/flats/{flatId}/members', { params: { path: { flatId } } })),
   })
+
+/** Leaves a flat. The last admin of a flat with other members answers 409. */
+export const useLeaveFlat = (flatId: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () =>
+      unwrap(api.POST('/api/v1/flats/{flatId}/leave', { params: { path: { flatId } } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: flatsKey }),
+  })
+}
+
+export type MemberRole = 'Admin' | 'Member'
+
+/** Promotes or demotes a member. Only an admin may do it; demoting the last admin answers 409. */
+export const useChangeMemberRole = (flatId: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: MemberRole }) =>
+      unwrap(
+        api.PATCH('/api/v1/flats/{flatId}/members/{userId}', {
+          params: { path: { flatId, userId } },
+          body: { role },
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: flatMembersKey(flatId) }),
+  })
+}
+
+/** Removes another member from a flat. Only an admin may do it. */
+export const useRemoveMember = (flatId: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (userId: string) =>
+      unwrap(
+        api.DELETE('/api/v1/flats/{flatId}/members/{userId}', {
+          params: { path: { flatId, userId } },
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: flatMembersKey(flatId) }),
+  })
+}

@@ -353,6 +353,131 @@
         }
       }
     },
+    "/api/v1/flats/{flatId}/leave": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Leaves a flat. The membership is kept as history. The last admin of a flat with other members cannot leave, so the flat always keeps an admin.",
+        "operationId": "LeaveFlat",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}/members/{userId}": {
+      "patch": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Promotes or demotes an active member of a flat. Only an admin may do it; members get 403. The sole admin of a flat cannot be demoted, so the flat always keeps an admin (409).",
+        "operationId": "ChangeFlatMemberRole",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Removes a member from a flat. Only an admin may do it; members get 403. Admins cannot remove themselves: they use the leave endpoint. Other flats and non-members answer 404.",
+        "operationId": "RemoveFlatMember",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "tags": [
@@ -728,69 +853,21 @@
           }
         }
       },
-      "NotificationPageResponse": {
+      "ChangeMemberRoleRequest": {
         "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalCount"
+          "role"
         ],
         "type": "object",
         "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationResponse"
-            },
-            "description": "The notifications of this page."
-          },
-          "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
+          "role": {
             "type": [
-              "integer",
+              "null",
               "string"
             ],
-            "description": "The page number, starting at 1.",
-            "format": "int32"
-          },
-          "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "The number of items asked for per page.",
-            "format": "int32"
-          },
-          "totalCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "How many notifications match the query, across all pages.",
-            "format": "int32"
+            "description": "Required: `Admin` or `Member`."
           }
         },
-        "description": "One page of the inbox, newest first."
-      },
-      "UnreadCountResponse": {
-        "required": [
-          "count"
-        ],
-        "type": "object",
-        "properties": {
-          "count": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "The number of unread notifications.",
-            "format": "int32"
-          }
-        },
-        "description": "How many unread notifications the caller has."
+        "description": "Request to promote or demote a member of a flat."
       },
       "NotificationResponse": {
         "required": [
@@ -844,6 +921,70 @@
           }
         },
         "description": "A notification as its recipient reads it."
+      },
+      "UnreadCountResponse": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of unread notifications.",
+            "format": "int32"
+          }
+        },
+        "description": "How many unread notifications the caller has."
+      },
+      "NotificationPageResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "description": "The notifications of this page."
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The page number, starting at 1.",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items asked for per page.",
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many notifications match the query, across all pages.",
+            "format": "int32"
+          }
+        },
+        "description": "One page of the inbox, newest first."
       },
       "HttpValidationProblemDetails": {
         "type": "object",

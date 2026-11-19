@@ -9,6 +9,20 @@
   "members": {
     "heading": "Miembros",
     "admin": "Administrador",
-    "member": "Miembro"
+    "member": "Miembro",
+    "you": "Tú",
+    "promote": "Hacer administrador",
+    "demote": "Quitar rol de administrador",
+    "remove": "Expulsar del piso",
+    "confirmDemote": "{{name}} dejará de ser administrador de este piso.",
+    "confirmRemove": "{{name}} saldrá del piso.",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "lastAdmin": "El piso necesita al menos un administrador. Haz administrador a otro miembro primero.",
+    "error": "No pudimos actualizar los miembros. Inténtalo de nuevo."
+  },
+  "leave": {
+    "action": "Salir del piso",
+    "confirm": "¿Seguro que quieres salir de este piso? Perderás el acceso a él."
   }
 }
