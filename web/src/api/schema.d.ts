@@ -4,32 +4,15 @@
  */
 
 export interface paths {
-    "/api/v1/platform/validation-sample": {
+    "/api/v1/platform/auth/google/sign-in": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
-        /** Sample endpoint showing field-keyed validation errors (400 ProblemDetails). */
-        post: operations["ValidationSample"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/platform/clock-sample": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Sample endpoint returning the time from the injectable clock. */
-        get: operations["ClockSample"];
+        /** Starts the Google sign-in. Redirects to Google, then back to the web app with the session cookie set. */
+        get: operations["SignInWithGoogle"];
         put?: never;
         post?: never;
         delete?: never;
@@ -38,69 +21,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/platform/profile": {
+    "/api/v1/platform/auth/microsoft/sign-in": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Returns the signed-in member's profile. */
-        get: operations["GetProfile"];
-        /** Replaces the signed-in member's profile: name, avatar, language and time zone. */
-        put: operations["UpdateProfile"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/flats": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lists the flats the signed-in account is a member of, oldest first. */
-        get: operations["ListMyFlats"];
-        put?: never;
-        /** Creates a flat. The signed-in account becomes its admin. */
-        post: operations["CreateFlat"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/flats/{flatId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Gets a flat the signed-in account is an active member of. Other flats answer 404. */
-        get: operations["GetFlat"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Renames a flat. Only an admin of the flat may do it; members get 403. */
-        patch: operations["RenameFlat"];
-        trace?: never;
-    };
-    "/api/v1/flats/{flatId}/members": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Lists the active members of a flat, admins first. Members who have left are not listed. */
-        get: operations["ListFlatMembers"];
+        /** Starts the Microsoft sign-in, for work, school and personal accounts. Redirects to Microsoft, then back to the web app with the session cookie set. */
+        get: operations["SignInWithMicrosoft"];
         put?: never;
         post?: never;
         delete?: never;
@@ -154,6 +83,145 @@ export interface paths {
         put?: never;
         /** Ends the session. Requires the antiforgery token in the X-XSRF-TOKEN header. */
         post: operations["SignOut"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/validation-sample": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sample endpoint showing field-keyed validation errors (400 ProblemDetails). */
+        post: operations["ValidationSample"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/clock-sample": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sample endpoint returning the time from the injectable clock. */
+        get: operations["ClockSample"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Returns the signed-in member's profile. */
+        get: operations["GetProfile"];
+        /** Replaces the signed-in member's profile: name, avatar, language and time zone. */
+        put: operations["UpdateProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/account/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Returns the signed-in member's data: their profile and every flat membership, active or left. */
+        get: operations["ExportAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Deletes the signed-in member's account. The member leaves every flat, and their name shows as a former member there. The last admin of a flat with other members cannot delete the account (409). Requires the antiforgery token in the X-XSRF-TOKEN header. */
+        delete: operations["DeleteAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the flats the signed-in account is a member of, oldest first. */
+        get: operations["ListMyFlats"];
+        put?: never;
+        /** Creates a flat. The signed-in account becomes its admin. */
+        post: operations["CreateFlat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/flats/{flatId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gets a flat the signed-in account is an active member of. Other flats answer 404. */
+        get: operations["GetFlat"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Renames a flat. Only an admin of the flat may do it; members get 403. */
+        patch: operations["RenameFlat"];
+        trace?: never;
+    };
+    "/api/v1/flats/{flatId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the active members of a flat, admins first. Members who have left are not listed. */
+        get: operations["ListFlatMembers"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -267,6 +335,68 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description The data export of the signed-in member: their profile and every membership. */
+        AccountExportResponse: {
+            /**
+             * Format: date-time
+             * @description When the export was made, in UTC.
+             */
+            exportedAt: string;
+            /** @description The member's profile. */
+            profile: components["schemas"]["AccountProfileExport"];
+            /** @description Every flat the member has been in, oldest first. */
+            memberships: components["schemas"]["AccountMembershipExport"][];
+        };
+        /** @description One membership of the member, active or left, in a flat. */
+        AccountMembershipExport: {
+            /**
+             * Format: uuid
+             * @description The flat.
+             */
+            flatId: string;
+            /** @description Name of the flat. */
+            flatName: string;
+            /** @description `Admin` or `Member`. */
+            role: string;
+            /**
+             * Format: date-time
+             * @description When the member joined, in UTC.
+             */
+            joinedAt: string;
+            /**
+             * Format: date-time
+             * @description When the member left, in UTC, or null while the membership is active.
+             */
+            leftAt: null | string;
+        };
+        /** @description The personal data of the signed-in member, as the export bundle holds it. */
+        AccountProfileExport: {
+            /** @description Name shown to the other members of a flat. */
+            displayName: string;
+            /** @description Email the sign-in provider reported, or null. Kept for contact only. */
+            email: null | string;
+            /** @description Picture URL, or null. */
+            avatarUrl: null | string;
+            /** @description Interface language, `es` or `en`. */
+            preferredLanguage: string;
+            /** @description IANA time zone identifier. */
+            timeZoneId: string;
+            /**
+             * Format: date-time
+             * @description When the account was created, in UTC.
+             */
+            createdAt: string;
+        };
+        /** @description Token the browser sends in the `X-XSRF-TOKEN` header of a state-changing request. */
+        AntiforgeryTokenResponse: {
+            /** @description The antiforgery request token. */
+            requestToken: string;
+        };
+        /** @description Request to change a member's role in a flat. */
+        ChangeMemberRoleRequest: {
+            /** @description Required: `Admin` or `Member`. */
+            role: null | string;
+        };
         /** @description Response of the clock sample: the current instant as the application's clock reports it. */
         ClockSampleResponse: {
             /**
@@ -316,60 +446,36 @@ export interface components {
             /** @description The caller's role in the flat: `Admin` or `Member`. */
             role: string;
         };
-        /** @description The profile of the signed-in member. */
-        ProfileResponse: {
-            /** @description Name shown to the other members of the flat. */
-            displayName: string;
-            /** @description Absolute https URL of the avatar, or null when there is none. */
-            avatarUrl: null | string;
-            /** @description Interface language: `es` or `en`. */
-            preferredLanguage: string;
-            /** @description IANA time zone identifier, for example `Europe/Madrid`. */
-            timeZoneId: string;
+        HttpValidationProblemDetails: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number | string;
+            detail?: null | string;
+            instance?: null | string;
+            errors?: {
+                [key: string]: string[];
+            };
         };
-        /** @description Request to rename a flat. */
-        UpdateFlatRequest: {
-            /** @description Required, at most 80 characters. */
-            name: null | string;
-        };
-        /**
-         * @description The full profile sent to `PUT profile`. Every field replaces the stored value, so an absent or empty
-         *     `avatarUrl` removes the avatar.
-         */
-        UpdateProfileRequest: {
-            displayName: null | string;
-            avatarUrl: null | string;
-            preferredLanguage: null | string;
-            timeZoneId: null | string;
-        };
-        /** @description Request of the sample endpoint that demonstrates field-keyed validation errors. */
-        ValidationSampleRequest: {
-            /** @description Required, at most 50 characters. */
-            name: null | string;
-        };
-        SessionResponse: {
+        /** @description One page of the inbox, newest first. */
+        NotificationPageResponse: {
+            /** @description The notifications of this page. */
+            items: components["schemas"]["NotificationResponse"][];
             /**
-             * Format: uuid
-             * @description The Flatly account id.
+             * Format: int32
+             * @description The page number, starting at 1.
              */
-            userId: string;
-            /** @description Name shown to the other members of a flat. */
-            displayName: string;
-            /** @description Picture URL, or null. */
-            avatarUrl: string | null;
-            /** @description Interface language, es or en. */
-            preferredLanguage: string;
-            /** @description IANA time zone identifier. */
-            timeZoneId: string;
-        };
-        AntiforgeryTokenResponse: {
-            /** @description The antiforgery request token. */
-            requestToken: string;
-        };
-        /** @description Request to promote or demote a member of a flat. */
-        ChangeMemberRoleRequest: {
-            /** @description Required: `Admin` or `Member`. */
-            role: null | string;
+            page: number | string;
+            /**
+             * Format: int32
+             * @description The number of items asked for per page.
+             */
+            pageSize: number | string;
+            /**
+             * Format: int32
+             * @description How many notifications match the query, across all pages.
+             */
+            totalCount: number | string;
         };
         /** @description A notification as its recipient reads it. */
         NotificationResponse: {
@@ -400,6 +506,33 @@ export interface components {
              */
             readAt: null | string;
         };
+        /** @description The profile of the signed-in member. */
+        ProfileResponse: {
+            /** @description Name shown to the other members of the flat. */
+            displayName: string;
+            /** @description Absolute https URL of the avatar, or null when there is none. */
+            avatarUrl: null | string;
+            /** @description Interface language: `es` or `en`. */
+            preferredLanguage: string;
+            /** @description IANA time zone identifier, for example `Europe/Madrid`. */
+            timeZoneId: string;
+        };
+        /** @description The member the session belongs to, as the web app shows it. */
+        SessionResponse: {
+            /**
+             * Format: uuid
+             * @description The Flatly account id.
+             */
+            userId: string;
+            /** @description Name shown to the other members of a flat. */
+            displayName: string;
+            /** @description Picture URL, or null. */
+            avatarUrl: null | string;
+            /** @description Interface language, `es` or `en`. */
+            preferredLanguage: string;
+            /** @description IANA time zone identifier. */
+            timeZoneId: string;
+        };
         /** @description How many unread notifications the caller has. */
         UnreadCountResponse: {
             /**
@@ -408,36 +541,25 @@ export interface components {
              */
             count: number | string;
         };
-        /** @description One page of the inbox, newest first. */
-        NotificationPageResponse: {
-            /** @description The notifications of this page. */
-            items: components["schemas"]["NotificationResponse"][];
-            /**
-             * Format: int32
-             * @description The page number, starting at 1.
-             */
-            page: number | string;
-            /**
-             * Format: int32
-             * @description The number of items asked for per page.
-             */
-            pageSize: number | string;
-            /**
-             * Format: int32
-             * @description How many notifications match the query, across all pages.
-             */
-            totalCount: number | string;
+        /** @description Request to rename a flat. */
+        UpdateFlatRequest: {
+            /** @description Required, at most 80 characters. */
+            name: null | string;
         };
-        HttpValidationProblemDetails: {
-            type?: null | string;
-            title?: null | string;
-            /** Format: int32 */
-            status?: null | number | string;
-            detail?: null | string;
-            instance?: null | string;
-            errors?: {
-                [key: string]: string[];
-            };
+        /**
+         * @description The full profile sent to `PUT profile`. Every field replaces the stored value, so an absent or empty
+         *     `avatarUrl` removes the avatar.
+         */
+        UpdateProfileRequest: {
+            displayName: null | string;
+            avatarUrl: null | string;
+            preferredLanguage: null | string;
+            timeZoneId: null | string;
+        };
+        /** @description Request of the sample endpoint that demonstrates field-keyed validation errors. */
+        ValidationSampleRequest: {
+            /** @description Required, at most 50 characters. */
+            name: null | string;
         };
     };
     responses: never;
@@ -448,6 +570,113 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    SignInWithGoogle: {
+        parameters: {
+            query?: {
+                returnUrl?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SignInWithMicrosoft: {
+        parameters: {
+            query?: {
+                returnUrl?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    GetSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionResponse"];
+                };
+            };
+        };
+    };
+    GetAntiforgeryToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AntiforgeryTokenResponse"];
+                };
+            };
+        };
+    };
+    SignOut: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-XSRF-TOKEN"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ValidationSample: {
         parameters: {
             query?: never;
@@ -533,6 +762,51 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProfileResponse"];
                 };
+            };
+        };
+    };
+    ExportAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExportResponse"];
+                };
+            };
+        };
+    };
+    DeleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -671,80 +945,6 @@ export interface operations {
             };
         };
     };
-    GetSession: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SessionResponse"];
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    GetAntiforgeryToken: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AntiforgeryTokenResponse"];
-                };
-            };
-        };
-    };
-    SignOut: {
-        parameters: {
-            query?: never;
-            header: {
-                "X-XSRF-TOKEN": string;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     LeaveFlat: {
         parameters: {
             query?: never;
@@ -805,13 +1005,6 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
             /** @description Not Found */
             404: {
                 headers: {
@@ -844,22 +1037,8 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Forbidden */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
             /** @description Not Found */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Conflict */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

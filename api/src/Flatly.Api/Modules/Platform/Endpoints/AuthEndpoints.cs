@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
 namespace Flatly.Api.Modules.Platform.Endpoints;
@@ -49,7 +51,7 @@ public static class AuthEndpoints
             .WithName("SignInWithMicrosoft")
             .WithSummary("Starts the Microsoft sign-in, for work, school and personal accounts. Redirects to Microsoft, then back to the web app with the session cookie set.");
 
-        group.MapGet("/auth/session", async (ClaimsPrincipal principal, UserManager<FlatlyUser> users) =>
+        group.MapGet("/auth/session", async Task<Results<Ok<SessionResponse>, UnauthorizedHttpResult>> (ClaimsPrincipal principal, UserManager<FlatlyUser> users) =>
             {
                 var user = Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
                     ? await users.FindByIdAsync(id.ToString("D"))
@@ -57,28 +59,32 @@ public static class AuthEndpoints
                 // A deleted account has no session, even when an old cookie still arrives.
                 user = user is { DeletedAt: null } ? user : null;
                 return user is null
-                    ? Results.Unauthorized()
+                    ? TypedResults.Unauthorized()
                     : TypedResults.Ok(new SessionResponse(user.Id, user.DisplayName, user.AvatarUrl, user.PreferredLanguage, user.TimeZoneId));
             })
             .WithName("GetSession")
             .WithSummary("The signed-in member. Returns 401 when there is no session.");
 
-        group.MapGet("/auth/antiforgery-token", (IAntiforgery antiforgery, HttpContext httpContext) =>
+        group.MapGet("/auth/antiforgery-token", Ok<AntiforgeryTokenResponse> (IAntiforgery antiforgery, HttpContext httpContext) =>
                 TypedResults.Ok(new AntiforgeryTokenResponse(antiforgery.GetAndStoreTokens(httpContext).RequestToken!)))
             .AllowAnonymous()
             .WithName("GetAntiforgeryToken")
             .WithSummary("Issues the antiforgery token that state-changing requests send in the X-XSRF-TOKEN header.");
 
-        group.MapPost("/auth/sign-out", async Task<IResult> (HttpContext httpContext, IAntiforgery antiforgery) =>
+        group.MapPost("/auth/sign-out", async Task<Results<NoContent, BadRequest>> (
+                [FromHeader(Name = "X-XSRF-TOKEN")] string? requestToken,
+                HttpContext httpContext,
+                IAntiforgery antiforgery) =>
             {
                 // Checked here, not by the middleware: minimal API endpoints without a form are not validated automatically.
-                if (!await antiforgery.IsRequestValidAsync(httpContext))
+                // The header is bound so the contract declares it; the token itself is checked by IsRequestValidAsync.
+                if (string.IsNullOrEmpty(requestToken) || !await antiforgery.IsRequestValidAsync(httpContext))
                 {
-                    return Results.BadRequest();
+                    return TypedResults.BadRequest();
                 }
 
                 await httpContext.SignOutAsync(SessionAuthentication.Scheme);
-                return Results.NoContent();
+                return TypedResults.NoContent();
             })
             .AllowAnonymous()
             .WithName("SignOut")
