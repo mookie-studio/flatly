@@ -35,3 +35,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+// Makes Program visible to the integration tests, which host the API in-process (see Flatly.Api.IntegrationTests).
+public partial class Program;
