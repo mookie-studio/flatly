@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { HttpResponse, http } from 'msw'
 import { server } from '@/test/server'
 import { config } from '@/lib/config'
@@ -8,12 +8,19 @@ import { Home } from './Home'
 
 const flatsUrl = `${config.apiUrl}/api/v1/flats`
 
+function CurrentPath() {
+  return <p data-testid="path">{useLocation().pathname}</p>
+}
+
 function renderHome() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={['/']}>
-        <Home />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/f/:flatId" element={<CurrentPath />} />
+        </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -55,7 +62,7 @@ describe('onboarding', () => {
     })
     fireEvent.click(screen.getByRole('button', { name: 'Create flat' }))
 
-    expect(await screen.findByRole('heading', { name: 'Calle Mayor 12' })).toBeInTheDocument()
+    expect(await screen.findByTestId('path')).toHaveTextContent('/f/f1')
     expect(body).toEqual({ name: 'Calle Mayor 12' })
   })
 
