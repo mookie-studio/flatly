@@ -73,6 +73,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the signed-in account's notifications, newest first. Use unread=true for the unread ones only. */
+        get: operations["ListNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Counts the signed-in account's unread notifications. */
+        get: operations["GetUnreadNotificationCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notificationId}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks one of the signed-in account's notifications as read. Marking it again changes nothing. */
+        post: operations["MarkNotificationRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marks every unread notification of the signed-in account as read. */
+        post: operations["MarkAllNotificationsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -106,6 +174,74 @@ export interface components {
             createdAt: string;
             /** @description The caller's role in the flat: `Admin` or `Member`. */
             role: string;
+        };
+        HttpValidationProblemDetails: {
+            type?: null | string;
+            title?: null | string;
+            /** Format: int32 */
+            status?: null | number | string;
+            detail?: null | string;
+            instance?: null | string;
+            errors?: {
+                [key: string]: string[];
+            };
+        };
+        /** @description One page of the inbox, newest first. */
+        NotificationPageResponse: {
+            /** @description The notifications of this page. */
+            items: components["schemas"]["NotificationResponse"][];
+            /**
+             * Format: int32
+             * @description The page number, starting at 1.
+             */
+            page: number | string;
+            /**
+             * Format: int32
+             * @description The number of items asked for per page.
+             */
+            pageSize: number | string;
+            /**
+             * Format: int32
+             * @description How many notifications match the query, across all pages.
+             */
+            totalCount: number | string;
+        };
+        /** @description A notification as its recipient reads it. */
+        NotificationResponse: {
+            /**
+             * Format: uuid
+             * @description Identifier of the notification.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The flat the notification is about.
+             */
+            flatId: string;
+            /** @description The area it comes from: `Flats`, `Chores` or `Maintenance`. */
+            category: string;
+            /** @description The text, rendered in the recipient's language. */
+            text: string;
+            /** @description A relative path inside Flatly, or null. */
+            linkTarget: null | string;
+            /**
+             * Format: date-time
+             * @description When the notification was created, in UTC.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the recipient read it, in UTC. Null while it is unread.
+             */
+            readAt: null | string;
+        };
+        /** @description How many unread notifications the caller has. */
+        UnreadCountResponse: {
+            /**
+             * Format: int32
+             * @description The number of unread notifications.
+             */
+            count: number | string;
         };
         /** @description Request of the sample endpoint that demonstrates field-keyed validation errors. */
         ValidationSampleRequest: {
@@ -231,6 +367,104 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListNotifications: {
+        parameters: {
+            query?: {
+                unread?: boolean;
+                page?: number | string;
+                pageSize?: number | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationPageResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+        };
+    };
+    GetUnreadNotificationCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnreadCountResponse"];
+                };
+            };
+        };
+    };
+    MarkNotificationRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    MarkAllNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
