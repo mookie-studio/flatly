@@ -31,8 +31,12 @@ Constraints:
 - **Stack:** React, TypeScript, Vite, React Router and TanStack Query.
 - **API client:** a typed client generated from the API's OpenAPI document.
 - **Layout:** responsive web. A PWA is tracked in the backlog (#33).
-- **Deployment:** the same approach as `entry-hub-frontend`, on Cloudflare Pages.
+- **Deployment:** the same approach as `entry-hub-frontend`.
 - **Languages:** Spanish and English from day one (#10).
+
+### Repository layout
+
+Open. Monorepo (`api/`, `web/`, `docs/`) versus a separate frontend repository is not decided by this ADR.
 
 ### Scope
 
@@ -42,16 +46,13 @@ Constraints:
 ## Consequences
 
 - **Simple operations:** one App Service for the API keeps deployment and cost low. Scaling beyond a single instance will need a revisit.
-- **Shared model:** using the flat as the tenant means every query and authorization check must filter by `FlatId`. This is enforced in the API and must be covered by tests.
-- **Local parity:** Aspire gives a repeatable local environment with PostgreSQL, so developers do not need a separate database setup.
+- **Shared model:** using the flat as the tenant means every query and authorization check must filter by `FlatId`. This must be enforced in the API and covered by tests.
+- **Local parity:** Aspire gives a repeatable local environment with PostgreSQL.
 - **Typed contract:** generating the client from OpenAPI keeps the frontend in sync with the API, but the API must keep its OpenAPI document accurate.
-- **No staging environment yet:** deployments go straight to production until a staging environment is added (backlog #130).
 - **Identity with external providers:** no password storage or email verification flows in MVP1. Users without a Google or Microsoft account cannot sign in until another provider is added.
 - **Uploads are deferred:** MVP1 has no file storage. The storage provider for MVP2 is still open (Azure Blob is the likely fit).
-- **Monorepo layout:** the repository structure (monorepo or separate web repository) is still open and is not decided by this ADR.
 
 ## Alternatives considered
 
-- **Kubernetes or container-based hosting:** rejected for now, because it adds operational overhead that the team does not need for MVP1.
+- **Kubernetes or container-based hosting:** rejected for now, because it adds operational overhead the team does not need for MVP1.
 - **Email/password login in MVP1:** rejected. Google and Microsoft sign-in covers the target users with less code to maintain.
-- **Next.js or another full-stack framework:** not chosen, to keep the API and web app separate and to reuse the existing `entry-hub` and `entry-hub-frontend` patterns.
