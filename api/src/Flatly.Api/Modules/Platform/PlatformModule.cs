@@ -2,6 +2,7 @@ using Flatly.Api.Data;
 using Flatly.Api.Modules.Platform.Email;
 using Flatly.Api.Modules.Platform.Endpoints;
 using Flatly.Api.Modules.Platform.Identity;
+using Flatly.Api.Modules.Platform.Scheduling;
 using Flatly.Api.Validation;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
@@ -36,6 +37,8 @@ public static class PlatformModule
         services.AddSingleton<IRequestValidator<UpdateProfileRequest>, UpdateProfileRequestValidator>();
         // Notification emails go through IEmailSender: SMTP locally, Resend in deployment (see api/README.md).
         services.AddEmailSender();
+        // Background jobs (Hangfire on PostgreSQL) run scheduled reminders. Features reach them through IReminderScheduler.
+        services.AddReminderScheduling();
         // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IRequestValidator<ValidationSampleRequest>, ValidationSampleRequestValidator>();
