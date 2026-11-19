@@ -64,6 +64,13 @@ Each module is a static class `<Name>Module` with three members:
 3. Add the new module's folder to the layout above when it is a new product area.
 4. Build and run: `dotnet build Flatly.slnx` and `dotnet run --project src/Flatly.AppHost` (or `src/Flatly.Api` on its own, without PostgreSQL). The OpenAPI document is at `/openapi/v1.json`.
 
+## Errors and validation
+
+Every error answers `application/problem+json` (RFC 9457 ProblemDetails):
+
+- **Validation**: attach `ValidationFilter<TRequest>` to an endpoint with `.AddEndpointFilter<ValidationFilter<TRequest>>()` and register one or more `IRequestValidator<TRequest>` in the module's `Add<Name>Module`. Invalid input gets a 400 whose `errors` object is keyed by field name. See `Modules/Platform/Endpoints/ValidationSampleEndpoint.cs` for the pattern.
+- **Unhandled exceptions**: `UnhandledExceptionHandler` logs the exception with its trace id and answers 500 with the trace id. The response never contains the exception message or stack trace.
+
 ## Example: a vertical slice
 
 A feature lives inside its module folder, so one folder holds everything it needs. This is the pattern for the first real endpoint of a module (for example, creating a flat in `Flats`). The example is documentation only; the code is added with that feature's task.

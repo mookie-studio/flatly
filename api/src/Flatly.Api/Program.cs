@@ -1,3 +1,4 @@
+using Flatly.Api.Errors;
 using Flatly.Api.Modules;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,8 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Health checks, OpenTelemetry, resilience and service discovery. See Flatly.ServiceDefaults.
 builder.AddServiceDefaults();
 
-// Every error the framework writes (validation, unhandled exceptions) becomes application/problem+json.
+// Every error becomes application/problem+json: framework errors, validation (see Validation/ValidationFilter)
+// and unhandled exceptions (see Errors/UnhandledExceptionHandler).
 builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<UnhandledExceptionHandler>();
 builder.Services.AddOpenApi();
 builder.Services.AddFlatlyModules();
 
