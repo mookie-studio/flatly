@@ -1,9 +1,11 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { HttpResponse, http } from 'msw'
 import { server } from '@/test/server'
 import { config } from '@/lib/config'
+import { LAST_FLAT_STORAGE_KEY } from '@/lib/last-flat'
 import { FlatHome } from './FlatHome'
 
 const flatUrl = `${config.apiUrl}/api/v1/flats/:flatId`
@@ -23,6 +25,10 @@ function renderFlat(path: string) {
 }
 
 describe('flat home', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
   it('shows the flat name and its active members with their roles', async () => {
     server.use(
       http.get(flatUrl, () =>
@@ -83,5 +89,34 @@ describe('flat home', () => {
     renderFlat('/f/f1')
 
     expect(await screen.findByRole('alert')).toHaveTextContent('We could not load your flat')
+  })
+
+  it('remembers the flat once the member can see it', async () => {
+    server.use(
+      http.get(flatUrl, () =>
+        HttpResponse.json({
+          id: 'f1',
+          name: 'Calle Mayor 12',
+          createdAt: '2026-11-19T20:00:00Z',
+          role: 'Member',
+        }),
+      ),
+      http.get(membersUrl, () => HttpResponse.json([])),
+    )
+    renderFlat('/f/f1')
+
+    await screen.findByRole('heading', { name: 'Calle Mayor 12' })
+    expect(window.localStorage.getItem(LAST_FLAT_STORAGE_KEY)).toBe('f1')
+  })
+
+  it('does not remember a flat the member cannot see', async () => {
+    server.use(
+      http.get(flatUrl, () => HttpResponse.json({ title: 'Not found' }, { status: 404 })),
+      http.get(membersUrl, () => HttpResponse.json({ title: 'Not found' }, { status: 404 })),
+    )
+    renderFlat('/f/someone-elses')
+
+    await screen.findByRole('alert')
+    expect(window.localStorage.getItem(LAST_FLAT_STORAGE_KEY)).toBeNull()
   })
 })

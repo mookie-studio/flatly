@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { useFlat, useFlatMembers, type FlatMember } from '@/api/flats'
 import { isApiError } from '@/api/errors'
 import { flatModuleLinks } from '@/components/layout/navigation'
+import { rememberLastFlatId } from '@/lib/last-flat'
 
 /** Home of one flat: its members and shortcuts to the modules that exist. */
 export function FlatHome() {
@@ -10,6 +12,12 @@ export function FlatHome() {
   const { t } = useTranslation('home')
   const flat = useFlat(flatId)
   const members = useFlatMembers(flatId)
+  const flatIsVisible = flat.isSuccess
+
+  // Only a flat the member can see is remembered, so the next visit to / lands here.
+  useEffect(() => {
+    if (flatIsVisible) rememberLastFlatId(flatId)
+  }, [flatIsVisible, flatId])
 
   if (flat.isPending || members.isPending) {
     return <p role="status">{t('loading')}</p>
