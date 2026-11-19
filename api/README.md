@@ -32,7 +32,7 @@ Module folders map to the product areas in the spec. Platform covers cross-cutti
 
 ## Local development with Aspire
 
-Aspire runs the API and PostgreSQL together, with one command from `api/`:
+Aspire runs PostgreSQL, the API and the web app (`web/`, the Vite dev server) together, with one command from `api/`:
 
 ```
 dotnet run --project src/Flatly.AppHost
