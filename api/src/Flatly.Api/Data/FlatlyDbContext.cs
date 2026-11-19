@@ -1,6 +1,8 @@
 using Flatly.Api.Data.Tenancy;
 using Flatly.Api.Modules.Flats.Data;
 using Flatly.Api.Modules.Flats.Domain;
+using Flatly.Api.Modules.Notifications.Data;
+using Flatly.Api.Modules.Notifications.Domain;
 using Flatly.Api.Modules.Platform.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -10,7 +12,7 @@ namespace Flatly.Api.Data;
 
 /// <summary>
 /// The application's single PostgreSQL context. It holds the ASP.NET Core Identity tables for accounts and their
-/// external logins, and the flats and their memberships. Other tables are added by the feature tasks that need them.
+/// external logins, and the flats and their memberships, and the notifications. Other tables are added by the feature tasks that need them.
 /// Column names are snake_case (see <see cref="DatabaseRegistration"/>), and every timestamp is a UTC <c>timestamptz</c>.
 /// </summary>
 public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
@@ -20,6 +22,9 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
 
     /// <summary>Who belongs to which flat, with the role and the join and leave dates.</summary>
     public DbSet<Membership> Memberships => Set<Membership>();
+
+    /// <summary>In-app notifications, one row per recipient. Not flat-scoped: the inbox spans every flat of the member.</summary>
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     private readonly CurrentFlat _currentFlat;
 
@@ -70,6 +75,8 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
         // Tenant isolation (ADR-002): every flat-scoped entity is filtered to the flat of the current request.
         // Each IFlatScoped entity needs one line here; the unit tests fail when one is missing.
         FilterByCurrentFlat<Membership>(builder);
+
+        NotificationsModelConfiguration.Configure(builder);
     }
 
     private void FilterByCurrentFlat<TEntity>(ModelBuilder builder) where TEntity : class, IFlatScoped =>

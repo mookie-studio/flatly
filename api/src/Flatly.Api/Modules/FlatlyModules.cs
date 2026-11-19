@@ -2,6 +2,7 @@ using Flatly.Api.Modules.Calendar;
 using Flatly.Api.Modules.Chores;
 using Flatly.Api.Modules.Flats;
 using Flatly.Api.Modules.Maintenance;
+using Flatly.Api.Modules.Notifications;
 using Flatly.Api.Modules.Platform;
 using Flatly.Api.Modules.Shopping;
 
@@ -18,6 +19,7 @@ public static class FlatlyModules
         services
             .AddPlatformModule()
             .AddFlatsModule()
+            .AddNotificationsModule()
             .AddChoresModule()
             .AddShoppingModule()
             .AddCalendarModule()
@@ -28,6 +30,7 @@ public static class FlatlyModules
     {
         app.MapPlatformModule();
         app.MapFlatsModule();
+        app.MapNotificationsModule();
         app.MapChoresModule();
         app.MapShoppingModule();
         app.MapCalendarModule();

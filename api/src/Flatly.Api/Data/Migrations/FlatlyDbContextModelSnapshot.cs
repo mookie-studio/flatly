@@ -94,6 +94,66 @@ namespace Flatly.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Flatly.Api.Modules.Notifications.Domain.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("category");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("FlatId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("flat_id");
+
+                    b.Property<string>("LinkTarget")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("link_target");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("TextArgsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("text_args_json");
+
+                    b.Property<string>("TextKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("text_key");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("FlatId")
+                        .HasDatabaseName("ix_notifications_flat_id");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_user_id_created_at");
+
+                    b.ToTable("notifications", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_notifications_category", "category in ('Flats', 'Chores', 'Maintenance')");
+                        });
+                });
+
             modelBuilder.Entity("Flatly.Api.Modules.Platform.Identity.FlatlyUser", b =>
                 {
                     b.Property<Guid>("Id")
@@ -305,6 +365,23 @@ namespace Flatly.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_memberships_users_user_id");
+                });
+
+            modelBuilder.Entity("Flatly.Api.Modules.Notifications.Domain.Notification", b =>
+                {
+                    b.HasOne("Flatly.Api.Modules.Flats.Domain.Flat", null)
+                        .WithMany()
+                        .HasForeignKey("FlatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_flats_flat_id");
+
+                    b.HasOne("Flatly.Api.Modules.Platform.Identity.FlatlyUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users_user_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>

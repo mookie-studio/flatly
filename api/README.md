@@ -78,7 +78,7 @@ The connection string is `ConnectionStrings:flatly`. Aspire injects it from the 
 
 - Migrations are additive only, so the previous version keeps working on the new schema (see [ADR-001](../docs/adr/0001-stack-and-deployment.md)).
 
-The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). The feature tasks add their entities and their migrations.
+The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). `AddNotifications` creates `notifications` (one row per recipient). The feature tasks add their entities and their migrations.
 
 ### Flats and memberships
 
@@ -108,6 +108,14 @@ Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see 
 The session is an HttpOnly, Secure, `SameSite=None` cookie (`Flatly.Session`) issued after the callback, because the web app and the API are on different sites. Its principal's name identifier is the Flatly account id.
 
 **Default-deny:** the fallback authorization policy requires a signed-in member on every endpoint. To make an endpoint public, mark it `.AllowAnonymous()` explicitly. Today that is the sign-in, token and sign-out endpoints, the health probes, the OpenAPI document and Scalar, and the two sample endpoints. Integration tests replace the cookie with the fake provider's ticket as the default scheme (see `FlatlyApiFactory`).
+
+### Notifications
+
+`Modules/Notifications` is the in-app inbox (MVP1, #62). A notification belongs to one member and one flat, and stores a text key with its parameters instead of words, so each member reads it in their own language. The catalog of keys and their Spanish and English templates is `Texts/NotificationTexts.cs`; a producer must use a key that exists there.
+
+Modules notify through `INotificationService.NotifyNowAsync`, which writes one row per recipient in one save. Every recipient must be an active member of the flat, otherwise the call throws, so a former member never receives the flat's activity. Email and scheduled reminders are separate tasks (#13).
+
+The endpoints are `GET /api/v1/notifications` (paged, newest first, `unread=true` for unread only), `GET /api/v1/notifications/unread-count`, `POST /api/v1/notifications/{id}/read` and `POST /api/v1/notifications/read-all`. The inbox only shows notifications about flats the caller is still an active member of, and another member's notification answers 404.
 
 ## Module convention
 
