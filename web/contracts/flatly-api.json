@@ -61,6 +61,94 @@
           }
         }
       }
+    },
+    "/api/v1/flats": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Creates a flat. The signed-in account becomes its admin.",
+        "operationId": "CreateFlat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFlatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Lists the flats the signed-in account is a member of, oldest first.",
+        "operationId": "ListMyFlats",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlatResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Gets a flat the signed-in account is an active member of. Other flats answer 404.",
+        "operationId": "GetFlat",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -78,6 +166,52 @@
           }
         },
         "description": "Response of the clock sample: the current instant as the application's clock reports it."
+      },
+      "CreateFlatRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required, at most 80 characters."
+          }
+        },
+        "description": "Request to create a flat."
+      },
+      "FlatResponse": {
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the flat.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the flat."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the flat was created, in UTC.",
+            "format": "date-time"
+          },
+          "role": {
+            "type": "string",
+            "description": "The caller's role in the flat: `Admin` or `Member`."
+          }
+        },
+        "description": "A flat as seen by one of its members."
       },
       "ValidationSampleRequest": {
         "required": [
@@ -100,6 +234,9 @@
   "tags": [
     {
       "name": "Platform"
+    },
+    {
+      "name": "Flats"
     }
   ]
 }
