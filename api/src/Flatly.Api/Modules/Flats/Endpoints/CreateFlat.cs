@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Flatly.Api.Data;
 using Flatly.Api.Modules.Flats;
 using Flatly.Api.Modules.Flats.Domain;
+using Flatly.Api.Modules.Flats.Invites;
 using Flatly.Api.Modules.Flats.Validation;
 using Flatly.Api.Modules.Platform.Identity;
 using Flatly.Api.Validation;
@@ -43,7 +44,14 @@ public static class CreateFlatEndpoint
         }
 
         var now = clock.GetUtcNow();
-        var flat = new Flat { Id = Guid.NewGuid(), Name = request.Name!.Trim(), CreatedAt = now };
+        var flat = new Flat
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name!.Trim(),
+            CreatedAt = now,
+            InviteCode = await InviteCodes.GenerateUniqueAsync(database, cancellationToken),
+            InviteCodeExpiresAt = now + InviteCodes.Lifetime,
+        };
         database.Flats.Add(flat);
         database.Memberships.Add(new Membership
         {

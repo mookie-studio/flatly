@@ -31,7 +31,8 @@ public static class FlatsModule
             .MapListMembers()
             .MapLeaveFlat()
             .MapRemoveMember()
-            .MapChangeMemberRole();
+            .MapChangeMemberRole()
+            .MapInviteCode();
         return app;
     }
 }

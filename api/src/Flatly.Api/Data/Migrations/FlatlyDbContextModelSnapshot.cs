@@ -33,6 +33,15 @@ namespace Flatly.Api.Data.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("InviteCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("invite_code");
+
+                    b.Property<DateTimeOffset?>("InviteCodeExpiresAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("invite_code_expires_at");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -41,6 +50,11 @@ namespace Flatly.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_flats");
+
+                    b.HasIndex("InviteCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_flats_invite_code")
+                        .HasFilter("invite_code is not null");
 
                     b.ToTable("flats", (string)null);
                 });

@@ -568,6 +568,73 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         Assert.Equal(MemberRole.Member, (await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject)).Role);
     }
 
+    [SkippableFact]
+    public async Task ANewFlatHasAnInviteCodeThatExpiresInSevenDays()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "invite-new-ana");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Invite flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        var invite = await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code");
+
+        Assert.Matches("^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$", invite!.Code);
+        Assert.Equal(Start.AddDays(7), invite.ExpiresAt);
+    }
+
+    [SkippableFact]
+    public async Task RegeneratingTheInviteCodeReplacesThePreviousOne()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "invite-regen-ana");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Regenerate flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var before = await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code");
+
+        var regenerated = await (await anaClient.PostAsync($"{FlatsUrl}/{flat.Id}/invite-code/regenerate", null))
+            .Content.ReadFromJsonAsync<InviteCodeResponse>();
+        var after = await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat.Id}/invite-code");
+
+        Assert.NotEqual(before!.Code, regenerated!.Code);
+        Assert.Equal(regenerated.Code, after!.Code);
+        Assert.Equal(regenerated.ExpiresAt, after.ExpiresAt);
+    }
+
+    [SkippableFact]
+    public async Task AMemberWhoIsNotAnAdminCannotReadOrRegenerateTheInviteCode()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "invite-admin-ana");
+        var bruno = await CreateAccountAsync(factory, "invite-admin-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Admin only flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+
+        var read = await brunoClient.GetAsync($"{FlatsUrl}/{flat.Id}/invite-code");
+        var regenerate = await brunoClient.PostAsync($"{FlatsUrl}/{flat.Id}/invite-code/regenerate", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, read.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, regenerate.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task TheInviteCodeOfAnotherFlatAnswersNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "invite-iso-ana");
+        var bruno = await CreateAccountAsync(factory, "invite-iso-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Ana invite flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        await FlatIsolation.AssertNotFoundForNonMemberAsync(brunoClient, anasFlat!.Id, id => $"{FlatsUrl}/{id}/invite-code");
+    }
+
     private static async Task<FakeExternalAccount> CreateAccountAsync(FlatlyApiFactory factory, string name)
     {
         var account = new FakeExternalAccount(ExternalProviders.Google, $"{name}-{Guid.NewGuid():N}", $"{name}@example.com", name);

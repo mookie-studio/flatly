@@ -13,4 +13,12 @@ public sealed class Flat
 
     /// <summary>When the flat was created, in UTC.</summary>
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>
+    /// The code that lets a new member join the flat. Stored in upper case; null only for flats created before codes existed.
+    /// </summary>
+    public string? InviteCode { get; set; }
+
+    /// <summary>When <see cref="InviteCode"/> stops working, in UTC.</summary>
+    public DateTimeOffset? InviteCodeExpiresAt { get; set; }
 }

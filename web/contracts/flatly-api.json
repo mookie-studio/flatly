@@ -604,6 +604,76 @@
           }
         }
       }
+    },
+    "/api/v1/flats/{flatId}/invite-code": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Gets the invite code of a flat and when it expires. Only an admin may read it; members get 403.",
+        "operationId": "GetFlatInviteCode",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}/invite-code/regenerate": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Replaces the invite code of a flat with a new one that lasts seven days. The previous code stops working. Only an admin may do it; members get 403.",
+        "operationId": "RegenerateFlatInviteCode",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1032,6 +1102,25 @@
             }
           }
         }
+      },
+      "InviteCodeResponse": {
+        "required": [
+          "code",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code, in upper case."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the code stops working, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A flat's invite code and the moment it stops working."
       }
     }
   },
