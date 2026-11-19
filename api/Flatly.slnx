@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Flatly.Api/Flatly.Api.csproj" />
+    <Project Path="src/Flatly.AppHost/Flatly.AppHost.csproj" />
+    <Project Path="src/Flatly.ServiceDefaults/Flatly.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Flatly.Api.Tests/Flatly.Api.Tests.csproj" />

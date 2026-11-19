@@ -1,6 +1,6 @@
 # Flatly API
 
-.NET 10 Minimal API with EF Core and PostgreSQL, run locally through .NET Aspire. This page covers the solution layout and how modules register themselves. Aspire and the database arrive with their own tasks.
+.NET 10 Minimal API with EF Core and PostgreSQL, run locally through .NET Aspire. This page covers the solution layout, running locally and how modules register themselves. EF Core and the database schema arrive with their own tasks.
 
 ## Layout
 
@@ -10,6 +10,8 @@ api/
   global.json             Pins the .NET SDK line
   Flatly.slnx             Solution file
   src/
+    Flatly.AppHost/        Aspire AppHost: starts the API and PostgreSQL for local development
+    Flatly.ServiceDefaults/ Health checks, OpenTelemetry, resilience and service discovery, shared by hosts
     Flatly.Api/
       Program.cs          Host setup: services, middleware, endpoint mapping
       Modules/
@@ -22,7 +24,28 @@ api/
         Maintenance/
 ```
 
-Module folders map to the product areas in the spec. Platform covers cross-cutting concerns such as accounts, sign-in and health.
+Module folders map to the product areas in the spec. Platform covers cross-cutting concerns such as accounts and sign-in.
+
+## Local development with Aspire
+
+Aspire runs the API and PostgreSQL together, with one command from `api/`:
+
+```
+dotnet run --project src/Flatly.AppHost
+```
+
+This needs Docker running (PostgreSQL runs in a container). The Aspire dashboard opens from the console output and shows the resources, logs, traces and health of each one. PostgreSQL keeps its data in a named volume, so it survives restarts of the AppHost.
+
+Aspire is for local development only. Production runs the API on Azure App Service, which does not use the AppHost.
+
+### Health endpoints
+
+Every host calls `AddServiceDefaults()` and `MapDefaultEndpoints()` (see `Flatly.ServiceDefaults`), which map:
+
+- `/health`: readiness. Every health check must pass.
+- `/alive`: liveness. Only checks tagged `live` must pass.
+
+Both answer `Healthy` or `Unhealthy`, and are mapped in every environment, since App Service uses them too.
 
 ## Module convention
 
@@ -39,7 +62,7 @@ Each module is a static class `<Name>Module` with three members:
 1. Create `src/Flatly.Api/Modules/<Name>/<Name>Module.cs` following the convention above.
 2. Add one line to `AddFlatlyModules` and one to `MapFlatlyModules` in `Modules/FlatlyModules.cs`.
 3. Add the new module's folder to the layout above when it is a new product area.
-4. Build and run: `dotnet build Flatly.slnx` and `dotnet run --project src/Flatly.Api`. The OpenAPI document is at `/openapi/v1.json`.
+4. Build and run: `dotnet build Flatly.slnx` and `dotnet run --project src/Flatly.AppHost` (or `src/Flatly.Api` on its own, without PostgreSQL). The OpenAPI document is at `/openapi/v1.json`.
 
 ## Example: a vertical slice
 
@@ -71,3 +94,5 @@ GITHUB_ACTIONS=true dotnet build Flatly.slnx -c Release
 ```
 
 The SDK is pinned in `global.json` with `latestFeature` roll-forward. Package versions are locked in `packages.lock.json` files, which are committed.
+
+The AppHost pins the Aspire SDK version in `Flatly.AppHost.csproj`. Keep the Aspire packages on the same version.
