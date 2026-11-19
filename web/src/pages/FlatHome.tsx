@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router'
 import {
@@ -13,6 +13,7 @@ import {
 import { isApiError } from '@/api/errors'
 import { useSession } from '@/auth/use-session'
 import { flatModuleLinks } from '@/components/layout/navigation'
+import { rememberLastFlatId } from '@/lib/last-flat'
 
 /** An action that waits for the member's confirmation before the API is called. */
 type Pending =
@@ -35,6 +36,13 @@ export function FlatHome() {
   const changeRole = useChangeMemberRole(flatId)
   const removeMember = useRemoveMember(flatId)
   const [pending, setPending] = useState<Pending | null>(null)
+
+  const flatIsVisible = flat.isSuccess
+
+  // Only a flat the member can see is remembered, so the next visit to / lands here.
+  useEffect(() => {
+    if (flatIsVisible) rememberLastFlatId(flatId)
+  }, [flatIsVisible, flatId])
 
   if (flat.isPending || members.isPending) {
     return <p role="status">{t('loading')}</p>
