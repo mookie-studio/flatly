@@ -5,7 +5,10 @@ export interface NavItem {
 }
 
 /** Primary destinations shown in the shell. Grows as modules land. */
-export const primaryNav: NavItem[] = [{ to: '/', labelKey: 'nav.home' }]
+export const primaryNav: NavItem[] = [
+  { to: '/', labelKey: 'nav.home' },
+  { to: '/profile', labelKey: 'nav.profile' },
+]
 
 /** Home of one flat. The active flat travels in the URL, so every module lives under it. */
 export const flatHomePath = (flatId: string) => `/f/${encodeURIComponent(flatId)}`

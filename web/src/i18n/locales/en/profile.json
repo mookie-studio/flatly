@@ -1,0 +1,37 @@
+{
+  "title": "Profile and settings",
+  "intro": "Your name is shown to the other members of your flats.",
+  "loadError": "We could not load your profile. Try again.",
+  "form": {
+    "displayName": "Display name",
+    "displayNameRequired": "Enter the name the other members will see.",
+    "avatarUrl": "Avatar URL",
+    "avatarHint": "Optional. Use a secure (https) link to an image. Leave it empty to remove your avatar.",
+    "avatarInvalid": "The avatar must be a secure (https) link.",
+    "language": "Interface language",
+    "timeZone": "Time zone",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Your changes are saved.",
+    "saveError": "We could not save your profile. Try again."
+  },
+  "export": {
+    "title": "Your data",
+    "intro": "Download a copy of your profile and of every flat you have been in.",
+    "action": "Download my data",
+    "preparing": "Preparing…",
+    "error": "We could not prepare your data. Try again."
+  },
+  "delete": {
+    "title": "Delete account",
+    "intro": "Deleting your account removes you from every flat. Your name then shows as \"Former member\" there, and you can no longer sign in.",
+    "action": "Delete my account",
+    "confirmTitle": "Delete your account?",
+    "confirmBody": "This cannot be undone. You will be signed out right away.",
+    "confirm": "Yes, delete my account",
+    "cancel": "Cancel",
+    "deleting": "Deleting…",
+    "lastAdmin": "You are the last admin of a flat with other members. Make another member an admin of these flats first:",
+    "error": "We could not delete your account. Try again."
+  }
+}
