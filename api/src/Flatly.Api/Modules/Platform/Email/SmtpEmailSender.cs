@@ -35,7 +35,6 @@ public sealed class SmtpEmailSender(IOptions<EmailOptions> options) : IEmailSend
             client.Credentials = new NetworkCredential(settings.Smtp.UserName, settings.Smtp.Password ?? string.Empty);
         }
 
-        // SmtpClient cannot be cancelled, so the token is only checked before the send starts.
-        await client.SendMailAsync(mail);
+        await client.SendMailAsync(mail, cancellationToken);
     }
 }
