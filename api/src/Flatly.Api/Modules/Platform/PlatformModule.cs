@@ -1,4 +1,5 @@
 using Flatly.Api.Data;
+using Flatly.Api.Modules.Platform.Email;
 using Flatly.Api.Modules.Platform.Endpoints;
 using Flatly.Api.Modules.Platform.Identity;
 using Flatly.Api.Validation;
@@ -26,6 +27,8 @@ public static class PlatformModule
             })
             .AddEntityFrameworkStores<FlatlyDbContext>();
         services.AddScoped<ExternalAccountService>();
+        // Notification emails go through IEmailSender: SMTP locally, Resend in deployment (see api/README.md).
+        services.AddEmailSender();
         // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IRequestValidator<ValidationSampleRequest>, ValidationSampleRequestValidator>();
