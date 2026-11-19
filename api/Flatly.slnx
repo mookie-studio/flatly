@@ -5,6 +5,7 @@
     <Project Path="src/Flatly.ServiceDefaults/Flatly.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Flatly.Api.IntegrationTests/Flatly.Api.IntegrationTests.csproj" />
     <Project Path="tests/Flatly.Api.Tests/Flatly.Api.Tests.csproj" />
   </Folder>
 </Solution>
