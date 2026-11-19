@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Flatly.Api.Data;
+using Flatly.Api.Modules.Flats.Scope;
 using Flatly.Api.Modules.Platform.Identity;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -11,10 +12,10 @@ namespace Flatly.Api.Modules.Flats.Endpoints;
 /// <summary>Maps <c>GET /{flatId}</c>: one flat, for its active members only.</summary>
 public static class GetFlatEndpoint
 {
-    /// <summary>Maps the endpoint under the given group.</summary>
+    /// <summary>Maps the endpoint under the given group, inside the flat route (see <see cref="FlatRoute"/>).</summary>
     public static RouteGroupBuilder MapGetFlat(this RouteGroupBuilder group)
     {
-        group.MapGet("/{flatId:guid}", GetAsync)
+        group.MapFlatScope().MapGet("/", GetAsync)
             .WithName("GetFlat")
             .WithSummary("Gets a flat the signed-in account is an active member of. Other flats answer 404.");
         return group;
