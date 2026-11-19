@@ -28,6 +28,7 @@ public static class PlatformModule
             .AddEntityFrameworkStores<FlatlyDbContext>();
         services.AddScoped<ExternalAccountService>();
         services.AddScoped<CurrentAccountResolver>();
+        services.AddSingleton<IRequestValidator<UpdateProfileRequest>, UpdateProfileRequestValidator>();
         // Notification emails go through IEmailSender: SMTP locally, Resend in deployment (see api/README.md).
         services.AddEmailSender();
         // Every part of the API reads the current time through TimeProvider, never DateTime.UtcNow, so tests can fake it.
@@ -42,7 +43,8 @@ public static class PlatformModule
         app.MapGroup(RoutePrefix)
             .WithTags("Platform")
             .MapValidationSample()
-            .MapClockSample();
+            .MapClockSample()
+            .MapProfile();
         return app;
     }
 }

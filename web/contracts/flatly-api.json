@@ -62,6 +62,56 @@
         }
       }
     },
+    "/api/v1/platform/profile": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Returns the signed-in member's profile.",
+        "operationId": "GetProfile",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Replaces the signed-in member's profile: name, avatar, language and time zone.",
+        "operationId": "UpdateProfile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/flats": {
       "post": {
         "tags": [
@@ -212,6 +262,73 @@
           }
         },
         "description": "A flat as seen by one of its members."
+      },
+      "ProfileResponse": {
+        "required": [
+          "displayName",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "Name shown to the other members of the flat."
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Absolute https URL of the avatar, or null when there is none."
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Interface language: `es` or `en`."
+          },
+          "timeZoneId": {
+            "type": "string",
+            "description": "IANA time zone identifier, for example `Europe/Madrid`."
+          }
+        },
+        "description": "The profile of the signed-in member."
+      },
+      "UpdateProfileRequest": {
+        "required": [
+          "displayName",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "preferredLanguage": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "timeZoneId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The full profile sent to `PUT profile`. Every field replaces the stored value, so an absent or empty\n`avatarUrl` removes the avatar."
       },
       "ValidationSampleRequest": {
         "required": [
