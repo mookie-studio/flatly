@@ -189,6 +189,124 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         Assert.Equal(HttpStatusCode.Unauthorized, create.StatusCode);
     }
 
+    [SkippableFact]
+    public async Task ListShowsTheActiveMembersAdminsFirst()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "members-ana");
+        var bruno = await CreateAccountAsync(factory, "members-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Members flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member, joinedAt: Start.AddDays(1));
+
+        var members = await anaClient.GetFromJsonAsync<List<FlatMemberResponse>>($"{FlatsUrl}/{flat.Id}/members");
+
+        Assert.Equal(2, members!.Count);
+        Assert.Equal(["members-ana", "members-bruno"], members.Select(member => member.DisplayName));
+        Assert.Equal(["Admin", "Member"], members.Select(member => member.Role));
+    }
+
+    [SkippableFact]
+    public async Task ListLeavesOutMembersWhoHaveLeft()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "left-members-ana");
+        var bruno = await CreateAccountAsync(factory, "left-members-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Left members flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member, leftAt: Start.AddDays(2));
+
+        var members = await anaClient.GetFromJsonAsync<List<FlatMemberResponse>>($"{FlatsUrl}/{flat.Id}/members");
+
+        Assert.Equal(["left-members-ana"], members!.Select(member => member.DisplayName));
+    }
+
+    [SkippableFact]
+    public async Task ListOfAnotherFlatAnswersNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "members-iso-ana");
+        var bruno = await CreateAccountAsync(factory, "members-iso-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Members iso"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        await FlatIsolation.AssertNotFoundForNonMemberAsync(brunoClient, anasFlat!.Id, id => $"{FlatsUrl}/{id}/members");
+    }
+
+    [SkippableFact]
+    public async Task AnAdminCanRenameTheFlat()
+    {
+        await using var factory = await CreateFactoryAsync();
+        using var client = factory.CreateSignedInClient(await CreateAccountAsync(factory, "rename-admin"));
+        var flat = await (await client.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Old name"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        var response = await client.PatchAsJsonAsync($"{FlatsUrl}/{flat!.Id}", new UpdateFlatRequest("  New name  "));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var renamed = await response.Content.ReadFromJsonAsync<FlatResponse>();
+        Assert.Equal("New name", renamed!.Name);
+        Assert.Equal("Admin", renamed.Role);
+        Assert.Equal("New name", (await client.GetFromJsonAsync<FlatResponse>($"{FlatsUrl}/{flat.Id}"))!.Name);
+    }
+
+    [SkippableFact]
+    public async Task AMemberCannotRenameTheFlat()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "rename-owner");
+        var bruno = await CreateAccountAsync(factory, "rename-member");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Keep name"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        await AddMemberAsync(factory, flat!.Id, bruno, MemberRole.Member);
+
+        var response = await brunoClient.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}", new UpdateFlatRequest("Hijacked"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("Keep name", (await anaClient.GetFromJsonAsync<FlatResponse>($"{FlatsUrl}/{flat.Id}"))!.Name);
+    }
+
+    [SkippableFact]
+    public async Task RenamingWithAnInvalidNameIsRejected()
+    {
+        await using var factory = await CreateFactoryAsync();
+        using var client = factory.CreateSignedInClient(await CreateAccountAsync(factory, "rename-invalid"));
+        var flat = await (await client.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Valid"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        var empty = await client.PatchAsJsonAsync($"{FlatsUrl}/{flat!.Id}", new UpdateFlatRequest(" "));
+        var tooLong = await client.PatchAsJsonAsync($"{FlatsUrl}/{flat.Id}", new UpdateFlatRequest(new string('x', 81)));
+
+        Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task RenamingAFlatOfAnotherMemberAnswersNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "rename-iso-ana");
+        var bruno = await CreateAccountAsync(factory, "rename-iso-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var anasFlat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Ana rename iso"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+
+        var request = new UpdateFlatRequest("Not mine");
+        var ofOtherFlat = await brunoClient.PatchAsJsonAsync($"{FlatsUrl}/{anasFlat!.Id}", request);
+        var ofMissingFlat = await brunoClient.PatchAsJsonAsync($"{FlatsUrl}/{Guid.NewGuid()}", request);
+
+        Assert.Equal(HttpStatusCode.NotFound, ofOtherFlat.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, ofMissingFlat.StatusCode);
+        Assert.Equal("Ana rename iso", (await anaClient.GetFromJsonAsync<FlatResponse>($"{FlatsUrl}/{anasFlat.Id}"))!.Name);
+    }
+
     private static async Task<FakeExternalAccount> CreateAccountAsync(FlatlyApiFactory factory, string name)
     {
         var account = new FakeExternalAccount(ExternalProviders.Google, $"{name}-{Guid.NewGuid():N}", $"{name}@example.com", name);
@@ -196,6 +314,29 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
         var accounts = scope.ServiceProvider.GetRequiredService<ExternalAccountService>();
         await accounts.FindOrCreateAsync(new ExternalIdentity(account.Provider, account.Subject, account.Email, account.Name));
         return account;
+    }
+
+    private static async Task AddMemberAsync(
+        FlatlyApiFactory factory,
+        Guid flatId,
+        FakeExternalAccount account,
+        MemberRole role,
+        DateTimeOffset? leftAt = null,
+        DateTimeOffset? joinedAt = null)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
+        var login = await database.UserLogins.SingleAsync(item => item.LoginProvider == account.Provider && item.ProviderKey == account.Subject);
+        database.Memberships.Add(new Membership
+        {
+            Id = Guid.NewGuid(),
+            FlatId = flatId,
+            UserId = login.UserId,
+            Role = role,
+            JoinedAt = joinedAt ?? Start,
+            LeftAt = leftAt,
+        });
+        await database.SaveChangesAsync();
     }
 
     private static async Task<Membership> FindMembershipAsync(FlatlyApiFactory factory, Guid flatId, string provider, string subject)

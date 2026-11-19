@@ -198,6 +198,87 @@
             "description": "Not Found"
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Renames a flat. Only an admin of the flat may do it; members get 403.",
+        "operationId": "RenameFlat",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFlatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}/members": {
+      "get": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Lists the active members of a flat, admins first. Members who have left are not listed.",
+        "operationId": "ListFlatMembers",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlatMemberResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
       }
     }
   },
@@ -232,6 +313,44 @@
           }
         },
         "description": "Request to create a flat."
+      },
+      "FlatMemberResponse": {
+        "required": [
+          "userId",
+          "displayName",
+          "avatarUrl",
+          "role",
+          "joinedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "description": "Identifier of the member's account.",
+            "format": "uuid"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Name the member shows in the flat."
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Absolute https URL of the avatar, or null when there is none."
+          },
+          "role": {
+            "type": "string",
+            "description": "The member's role in the flat: `Admin` or `Member`."
+          },
+          "joinedAt": {
+            "type": "string",
+            "description": "When the member joined the flat, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "An active member of a flat, as seen by the other members."
       },
       "FlatResponse": {
         "required": [
@@ -293,6 +412,22 @@
           }
         },
         "description": "The profile of the signed-in member."
+      },
+      "UpdateFlatRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required, at most 80 characters."
+          }
+        },
+        "description": "Request to rename a flat."
       },
       "UpdateProfileRequest": {
         "required": [
