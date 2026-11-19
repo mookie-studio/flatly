@@ -9,6 +9,20 @@
   "members": {
     "heading": "Members",
     "admin": "Admin",
-    "member": "Member"
+    "member": "Member",
+    "you": "You",
+    "promote": "Make admin",
+    "demote": "Remove admin role",
+    "remove": "Remove from flat",
+    "confirmDemote": "{{name}} will stop being an admin of this flat.",
+    "confirmRemove": "{{name}} will be removed from this flat.",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "lastAdmin": "A flat needs at least one admin. Make another member an admin first.",
+    "error": "We could not update the members. Try again."
+  },
+  "leave": {
+    "action": "Leave flat",
+    "confirm": "Leave this flat? You will lose access to it."
   }
 }
