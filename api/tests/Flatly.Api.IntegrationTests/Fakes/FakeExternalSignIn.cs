@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
-using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
+using Flatly.Api.Modules.Platform.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -37,14 +37,16 @@ public sealed class FakeExternalSignIn
 }
 
 /// <summary>
-/// Authentication scheme that reads the ticket from <see cref="TicketHeader"/> and turns it into a signed-in principal.
-/// Registered only by the integration test host, so the API itself does not change.
+/// Authentication scheme that reads the ticket from <see cref="TicketHeader"/> and signs the account in the same way the
+/// Google sign-in does: it finds or creates the Flatly account and makes its id the principal. Registered only by the
+/// integration test host, which uses it as the default scheme in place of the session cookie.
 /// </summary>
 internal sealed class FakeExternalAuthenticationHandler(
     IOptionsMonitor<AuthenticationSchemeOptions> options,
     ILoggerFactory logger,
     UrlEncoder encoder,
-    FakeExternalSignIn signIn)
+    FakeExternalSignIn signIn,
+    ExternalAccountService accounts)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
     /// <summary>Name of the scheme, used with <c>AuthenticateAsync</c>.</summary>
@@ -54,26 +56,18 @@ internal sealed class FakeExternalAuthenticationHandler(
     public const string TicketHeader = "X-Fake-External-Ticket";
 
     /// <inheritdoc />
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue(TicketHeader, out var tickets)
             || !signIn.TryGetAccount(tickets.ToString(), out var account)
             || account is null)
         {
-            return Task.FromResult(AuthenticateResult.NoResult());
+            return AuthenticateResult.NoResult();
         }
 
-        var claims = new List<Claim>
-        {
-            new(ClaimTypes.NameIdentifier, account.Subject, ClaimValueTypes.String, account.Provider),
-            new(ClaimTypes.Email, account.Email, ClaimValueTypes.Email, account.Provider),
-        };
-        if (account.Name is not null)
-        {
-            claims.Add(new Claim(ClaimTypes.Name, account.Name, ClaimValueTypes.String, account.Provider));
-        }
-
-        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, SchemeName));
-        return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName)));
+        var user = await accounts.FindOrCreateAsync(new ExternalIdentity(
+            account.Provider, account.Subject, account.Email, account.Name));
+        var principal = SessionAuthentication.PrincipalFor(user);
+        return AuthenticateResult.Success(new AuthenticationTicket(principal, SchemeName));
     }
 }

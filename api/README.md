@@ -82,7 +82,15 @@ The migration `Initial` is empty. `AddIdentity` creates the account tables: `use
 
 ### Accounts
 
-Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. The sign-in endpoints and the cookie session are added by their own tasks.
+Accounts use ASP.NET Core Identity on `FlatlyDbContext`, without passwords (see [ADR-003](../docs/adr/0003-identity-with-external-providers.md)). `ExternalAccountService.FindOrCreateAsync` returns the account behind an external sign-in, and creates it the first time. Accounts are matched only by provider and subject id, never by email, so the same email from Google and Microsoft gives two accounts. Sign-in is Google only for now. The endpoints live in `Modules/Platform/Endpoints/AuthEndpoints.cs`:
+
+- `GET /api/v1/platform/auth/google/sign-in?returnUrl=` starts the Google sign-in (the provider's callback is `/signin-google`). `returnUrl` may only point to the web origin (`Web:Origin`); anything else goes to its home page.
+- `GET /api/v1/platform/auth/session` returns the signed-in member, or 401.
+- `GET /api/v1/platform/auth/antiforgery-token` issues the token that every state-changing request sends in the `X-XSRF-TOKEN` header. `POST /api/v1/platform/auth/sign-out` requires it.
+
+The session is an HttpOnly, Secure, `SameSite=None` cookie (`Flatly.Session`) issued after the callback, because the web app and the API are on different sites. Its principal's name identifier is the Flatly account id.
+
+**Default-deny:** the fallback authorization policy requires a signed-in member on every endpoint. To make an endpoint public, mark it `.AllowAnonymous()` explicitly. Today that is the sign-in, token and sign-out endpoints, the health probes, the OpenAPI document and Scalar, and the two sample endpoints. Integration tests replace the cookie with the fake provider's ticket as the default scheme (see `FlatlyApiFactory`).
 
 ## Module convention
 

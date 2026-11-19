@@ -18,11 +18,11 @@ public static class OpenApiSetup
     /// <summary>Maps <c>/openapi/v1.json</c> and, outside Production, the Scalar UI at <c>/scalar</c>.</summary>
     public static WebApplication MapFlatlyOpenApi(this WebApplication app)
     {
-        app.MapOpenApi();
+        app.MapOpenApi().AllowAnonymous();
 
         if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
         {
-            app.MapScalarApiReference(options => options.WithTitle("Flatly API"));
+            app.MapScalarApiReference(options => options.WithTitle("Flatly API")).AllowAnonymous();
         }
 
         return app;

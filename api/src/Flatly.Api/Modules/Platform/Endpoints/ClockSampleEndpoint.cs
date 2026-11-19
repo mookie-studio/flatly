@@ -17,6 +17,7 @@ public static class ClockSampleEndpoint
     public static RouteGroupBuilder MapClockSample(this RouteGroupBuilder group)
     {
         group.MapGet("/clock-sample", (TimeProvider clock) => TypedResults.Ok(new ClockSampleResponse(clock.GetUtcNow())))
+            .AllowAnonymous()
             .WithName("ClockSample")
             .WithSummary("Sample endpoint returning the time from the injectable clock.");
         return group;
