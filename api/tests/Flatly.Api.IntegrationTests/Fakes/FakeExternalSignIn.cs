@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Encodings.Web;
-using Microsoft.AspNetCore.Authentication;
 using Flatly.Api.Modules.Platform.Identity;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

@@ -5,9 +5,9 @@ using Flatly.Api.Modules.Platform.Identity;
 using Flatly.Api.Validation;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.AspNetCore.Http;
 
 namespace Flatly.Api.Modules.Platform;
 
