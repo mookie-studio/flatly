@@ -1,5 +1,73 @@
 # Flatly API
 
-.NET 10 Minimal API with EF Core and PostgreSQL, run locally through .NET Aspire.
+.NET 10 Minimal API with EF Core and PostgreSQL, run locally through .NET Aspire. This page covers the solution layout and how modules register themselves. Aspire and the database arrive with their own tasks.
 
-The solution is added in a later task (see the API solution layout issue).
+## Layout
+
+```
+api/
+  Directory.Build.props   Shared compiler and analyzer settings for every project
+  global.json             Pins the .NET SDK line
+  Flatly.slnx             Solution file
+  src/
+    Flatly.Api/
+      Program.cs          Host setup: services, middleware, endpoint mapping
+      Modules/
+        FlatlyModules.cs  The single list of modules (register and map)
+        Platform/         One folder per module, each with <Name>Module.cs
+        Flats/
+        Chores/
+        Shopping/         MVP2
+        Calendar/         MVP2
+        Maintenance/
+```
+
+Module folders map to the product areas in the spec. Platform covers cross-cutting concerns such as accounts, sign-in and health.
+
+## Module convention
+
+Each module is a static class `<Name>Module` with three members:
+
+- `RoutePrefix`: the base path of its endpoints, always `/api/v1/<name>`.
+- `Add<Name>Module(this IServiceCollection)`: registers the module's services and returns the collection.
+- `Map<Name>Module(this IEndpointRouteBuilder)`: maps its endpoints under a `MapGroup(RoutePrefix)` and returns the builder.
+
+`Modules/FlatlyModules.cs` calls every module, in one place. `Program.cs` only calls `AddFlatlyModules()` and `MapFlatlyModules()`, so it does not change when a module is added.
+
+## Adding a module
+
+1. Create `src/Flatly.Api/Modules/<Name>/<Name>Module.cs` following the convention above.
+2. Add one line to `AddFlatlyModules` and one to `MapFlatlyModules` in `Modules/FlatlyModules.cs`.
+3. Add the new module's folder to the layout above when it is a new product area.
+4. Build and run: `dotnet build Flatly.slnx` and `dotnet run --project src/Flatly.Api`. The OpenAPI document is at `/openapi/v1.json`.
+
+## Example: a vertical slice
+
+A feature lives inside its module folder, so one folder holds everything it needs. This is the pattern for the first real endpoint of a module (for example, creating a flat in `Flats`). The example is documentation only; the code is added with that feature's task.
+
+```
+Modules/Flats/
+  FlatsModule.cs                 Registration and endpoint group
+  Endpoints/CreateFlat.cs        Request, handler and endpoint mapping
+  Validation/CreateFlatRequestValidator.cs
+  Domain/Flat.cs                 Entity
+  Data/FlatsDbContext.cs         EF Core context, owned by this module
+  Data/Migrations/               Migrations created from this module's context
+```
+
+- **Endpoints**: one file per operation. The file maps its own route inside the module's group, so `FlatsModule.MapFlatsModule` only needs to call the group's mapping methods.
+- **Validators**: validate the request before the handler runs. Failures return ProblemDetails.
+- **Entities**: plain classes in `Domain/`. They do not depend on HTTP types.
+- **Migrations**: each module owns its `DbContext` and migrations, so a module can change its schema without touching others.
+
+Registration for the slice is one extra call inside `AddFlatsModule` (for example `services.AddDbContext<FlatsDbContext>(...)`) and nothing else in `Program.cs`.
+
+## Running
+
+Run `dotnet build Flatly.slnx` from `api/`. CI builds with warnings treated as errors, so keep the build clean locally:
+
+```
+GITHUB_ACTIONS=true dotnet build Flatly.slnx -c Release
+```
+
+The SDK is pinned in `global.json` with `latestFeature` roll-forward. Package versions are locked in `packages.lock.json` files, which are committed.
