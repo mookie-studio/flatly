@@ -1,9 +1,9 @@
-using Xunit;
 using Flatly.Api.Documentation;
 using Flatly.Api.Modules;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Xunit;
 
 namespace Flatly.Api.Tests.Documentation;
 
