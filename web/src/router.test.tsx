@@ -2,13 +2,16 @@ import { render, screen } from '@testing-library/react'
 import { RouterProvider } from 'react-router/dom'
 import { AuthContext, type AuthState } from './auth/auth-context'
 import { createTestRouter } from './router'
+import { ThemeProvider } from './theme/ThemeProvider'
 
 function renderAt(path: string, auth: AuthState) {
   const router = createTestRouter(path)
   render(
-    <AuthContext.Provider value={auth}>
-      <RouterProvider router={router} />
-    </AuthContext.Provider>,
+    <ThemeProvider>
+      <AuthContext.Provider value={auth}>
+        <RouterProvider router={router} />
+      </AuthContext.Provider>
+    </ThemeProvider>,
   )
   return router
 }

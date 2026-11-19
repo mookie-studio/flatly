@@ -1,0 +1,13 @@
+{
+  "brand": "Flatly",
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "nav": {
+    "primary": "Primary",
+    "home": "Home"
+  }
+}

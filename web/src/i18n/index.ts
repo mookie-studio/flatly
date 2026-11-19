@@ -10,6 +10,8 @@ import esAuth from './locales/es/auth.json'
 import esCommon from './locales/es/common.json'
 import esHome from './locales/es/home.json'
 import esNotFound from './locales/es/notFound.json'
+import enShell from './locales/en/shell.json'
+import esShell from './locales/es/shell.json'
 
 export const SUPPORTED_LANGUAGES = ['es', 'en'] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
@@ -19,8 +21,8 @@ export const LANGUAGE_STORAGE_KEY = 'flatly.language'
 // Translations are grouped per feature (namespace). Add a feature by adding a
 // JSON file for each language and listing it here.
 export const resources = {
-  es: { common: esCommon, auth: esAuth, home: esHome, notFound: esNotFound },
-  en: { common: enCommon, auth: enAuth, home: enHome, notFound: enNotFound },
+  es: { common: esCommon, auth: esAuth, home: esHome, notFound: esNotFound, shell: esShell },
+  en: { common: enCommon, auth: enAuth, home: enHome, notFound: enNotFound, shell: enShell },
 } as const
 
 export const defaultNS = 'common'
@@ -35,7 +37,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    ns: ['common', 'auth', 'home', 'notFound'],
+    ns: ['common', 'auth', 'home', 'notFound', 'shell'],
     defaultNS,
     supportedLngs: SUPPORTED_LANGUAGES,
     nonExplicitSupportedLngs: true,
