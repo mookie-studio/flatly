@@ -1,6 +1,6 @@
 # Flatly API
 
-.NET 10 Minimal API with EF Core and PostgreSQL, run locally through .NET Aspire. This page covers the solution layout, running locally and how modules register themselves. EF Core and the database schema arrive with their own tasks.
+.NET 10 Minimal API with EF Core and PostgreSQL, run locally through .NET Aspire. This page covers the solution layout, running locally, the database and how modules register themselves.
 
 ## Layout
 
@@ -14,6 +14,7 @@ api/
     Flatly.ServiceDefaults/ Health checks, OpenTelemetry, resilience and service discovery, shared by hosts
     Flatly.Api/
       Program.cs          Host setup: services, middleware, endpoint mapping
+      Data/               The EF Core context, its registration and the migrations
       Modules/
         FlatlyModules.cs  The single list of modules (register and map)
         Platform/         One folder per module, each with <Name>Module.cs
@@ -46,6 +47,35 @@ Every host calls `AddServiceDefaults()` and `MapDefaultEndpoints()` (see `Flatly
 - `/alive`: liveness. Only checks tagged `live` must pass.
 
 Both answer `Healthy` or `Unhealthy`, and are mapped in every environment, since App Service uses them too.
+
+## Database
+
+The API uses one EF Core context, `FlatlyDbContext`, on PostgreSQL. Its conventions apply to every table:
+
+- **Names are snake_case:** tables and columns, for example `created_at`.
+- **Timestamps are UTC `timestamptz`.** Npgsql only accepts UTC `DateTime` values for these columns, so a local or unspecified value fails instead of being stored with the wrong offset.
+
+The connection string is `ConnectionStrings:flatly`. Aspire injects it from the `flatly` database in the AppHost, and App Service reads `ConnectionStrings__flatly`.
+
+### Migrations
+
+- **Development** applies pending migrations on every start.
+- **Any environment** can apply them explicitly, with the `migrate` command. It applies the pending migrations and exits without starting the server:
+
+  ```
+  dotnet run --project src/Flatly.Api -- migrate
+  ```
+
+  Deployment runs this command before the new version starts.
+- **Add a migration** from `api/src/Flatly.Api`, with the `dotnet-ef` tool at the version of the EF Core packages (10.0.15):
+
+  ```
+  dotnet ef migrations add <Name> --output-dir Data/Migrations
+  ```
+
+- Migrations are additive only, so the previous version keeps working on the new schema (see [ADR-001](../docs/adr/0001-stack-and-deployment.md)).
+
+The first migration, `Initial`, is empty: the context has no tables yet. The feature tasks add their entities and their migrations.
 
 ## Module convention
 

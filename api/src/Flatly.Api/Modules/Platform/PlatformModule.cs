@@ -1,3 +1,4 @@
+using Flatly.Api.Data;
 using Flatly.Api.Modules.Platform.Endpoints;
 using Flatly.Api.Validation;
 
@@ -12,6 +13,7 @@ public static class PlatformModule
     /// <summary>Registers the services this module needs.</summary>
     public static IServiceCollection AddPlatformModule(this IServiceCollection services)
     {
+        services.AddFlatlyDatabase();
         services.AddSingleton<IRequestValidator<ValidationSampleRequest>, ValidationSampleRequestValidator>();
         return services;
     }
