@@ -30,7 +30,8 @@ public static class ChoresModule
             .WithTags("Chores")
             .MapListChores()
             .MapCreateChore()
-            .MapUpdateChore();
+            .MapUpdateChore()
+            .MapTurns();
         return app;
     }
 }

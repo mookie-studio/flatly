@@ -122,6 +122,10 @@ namespace Flatly.Api.Data.Migrations
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
 
+                    b.Property<DateTimeOffset?>("DoneAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("done_at");
+
                     b.Property<DateOnly>("DueOn")
                         .HasColumnType("date")
                         .HasColumnName("due_on");
@@ -155,6 +159,8 @@ namespace Flatly.Api.Data.Migrations
 
                     b.ToTable("turns", null, t =>
                         {
+                            t.HasCheckConstraint("ck_turns_done_at", "(status = 'Done') = (done_at is not null)");
+
                             t.HasCheckConstraint("ck_turns_status", "status in ('Pending', 'Done')");
 
                             t.HasCheckConstraint("ck_turns_weight_snapshot", "weight_snapshot between 1 and 5");

@@ -32,4 +32,7 @@ public sealed class Turn : IFlatScoped
 
     /// <summary>When the turn was created, in UTC.</summary>
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>When the assignee confirmed the turn, in UTC. Null while the turn is pending. Cleared again on undo.</summary>
+    public DateTimeOffset? DoneAt { get; set; }
 }
