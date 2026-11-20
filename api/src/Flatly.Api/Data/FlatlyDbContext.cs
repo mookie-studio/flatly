@@ -1,4 +1,6 @@
 using Flatly.Api.Data.Tenancy;
+using Flatly.Api.Modules.Chores.Data;
+using Flatly.Api.Modules.Chores.Domain;
 using Flatly.Api.Modules.Flats.Data;
 using Flatly.Api.Modules.Flats.Domain;
 using Flatly.Api.Modules.Notifications.Data;
@@ -22,6 +24,12 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
 
     /// <summary>Who belongs to which flat, with the role and the join and leave dates.</summary>
     public DbSet<Membership> Memberships => Set<Membership>();
+
+    /// <summary>Household chores of each flat, flat-scoped.</summary>
+    public DbSet<Chore> Chores => Set<Chore>();
+
+    /// <summary>Members who take part in the rotation of a chore, flat-scoped.</summary>
+    public DbSet<ChoreParticipant> ChoreParticipants => Set<ChoreParticipant>();
 
     /// <summary>In-app notifications, one row per recipient. Not flat-scoped: the inbox spans every flat of the member.</summary>
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -75,6 +83,10 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
         // Tenant isolation (ADR-002): every flat-scoped entity is filtered to the flat of the current request.
         // Each IFlatScoped entity needs one line here; the unit tests fail when one is missing.
         FilterByCurrentFlat<Membership>(builder);
+
+        ChoresModelConfiguration.Configure(builder);
+        FilterByCurrentFlat<Chore>(builder);
+        FilterByCurrentFlat<ChoreParticipant>(builder);
 
         NotificationsModelConfiguration.Configure(builder);
     }

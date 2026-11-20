@@ -22,6 +22,87 @@ namespace Flatly.Api.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Flatly.Api.Modules.Chores.Domain.Chore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("FlatId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("flat_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("RecurrenceEvery")
+                        .HasColumnType("integer")
+                        .HasColumnName("recurrence_every");
+
+                    b.Property<string>("RecurrenceUnit")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)")
+                        .HasColumnName("recurrence_unit");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("integer")
+                        .HasColumnName("weight");
+
+                    b.HasKey("Id")
+                        .HasName("pk_chores");
+
+                    b.HasIndex("FlatId", "IsActive")
+                        .HasDatabaseName("ix_chores_flat_id_is_active");
+
+                    b.ToTable("chores", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_chores_recurrence_every", "recurrence_every between 1 and 365");
+
+                            t.HasCheckConstraint("ck_chores_recurrence_unit", "recurrence_unit in ('Day', 'Week', 'Month')");
+
+                            t.HasCheckConstraint("ck_chores_weight", "weight between 1 and 5");
+                        });
+                });
+
+            modelBuilder.Entity("Flatly.Api.Modules.Chores.Domain.ChoreParticipant", b =>
+                {
+                    b.Property<Guid>("ChoreId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("chore_id");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("FlatId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("flat_id");
+
+                    b.HasKey("ChoreId", "UserId")
+                        .HasName("pk_chore_participants");
+
+                    b.HasIndex("FlatId")
+                        .HasDatabaseName("ix_chore_participants_flat_id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_chore_participants_user_id");
+
+                    b.ToTable("chore_participants", (string)null);
+                });
+
             modelBuilder.Entity("Flatly.Api.Modules.Flats.Domain.Flat", b =>
                 {
                     b.Property<Guid>("Id")
@@ -364,6 +445,33 @@ namespace Flatly.Api.Data.Migrations
                     b.ToTable("user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Flatly.Api.Modules.Chores.Domain.Chore", b =>
+                {
+                    b.HasOne("Flatly.Api.Modules.Flats.Domain.Flat", null)
+                        .WithMany()
+                        .HasForeignKey("FlatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_chores_flats_flat_id");
+                });
+
+            modelBuilder.Entity("Flatly.Api.Modules.Chores.Domain.ChoreParticipant", b =>
+                {
+                    b.HasOne("Flatly.Api.Modules.Chores.Domain.Chore", null)
+                        .WithMany("Participants")
+                        .HasForeignKey("ChoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_chore_participants_chores_chore_id");
+
+                    b.HasOne("Flatly.Api.Modules.Platform.Identity.FlatlyUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_chore_participants_users_user_id");
+                });
+
             modelBuilder.Entity("Flatly.Api.Modules.Flats.Domain.Membership", b =>
                 {
                     b.HasOne("Flatly.Api.Modules.Flats.Domain.Flat", null)
@@ -426,6 +534,11 @@ namespace Flatly.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_user_tokens_users_user_id");
+                });
+
+            modelBuilder.Entity("Flatly.Api.Modules.Chores.Domain.Chore", b =>
+                {
+                    b.Navigation("Participants");
                 });
 #pragma warning restore 612, 618
         }

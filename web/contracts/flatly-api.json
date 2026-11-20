@@ -10,6 +10,101 @@
     }
   ],
   "paths": {
+    "/api/v1/platform/auth/google/sign-in": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Starts the Google sign-in. Redirects to Google, then back to the web app with the session cookie set.",
+        "operationId": "SignInWithGoogle",
+        "parameters": [
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/microsoft/sign-in": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Starts the Microsoft sign-in, for work, school and personal accounts. Redirects to Microsoft, then back to the web app with the session cookie set.",
+        "operationId": "SignInWithMicrosoft",
+        "parameters": [
+          {
+            "name": "returnUrl",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/session": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "The signed-in member. Returns 401 when there is no session.",
+        "operationId": "GetSession",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/antiforgery-token": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Issues the antiforgery token that state-changing requests send in the X-XSRF-TOKEN header.",
+        "operationId": "GetAntiforgeryToken",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AntiforgeryTokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/auth/sign-out": {
+      "post": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Ends the session. Requires the antiforgery token in the X-XSRF-TOKEN header.",
+        "operationId": "SignOut",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/platform/validation-sample": {
       "post": {
         "tags": [
@@ -108,6 +203,44 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account/export": {
+      "get": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Returns the signed-in member's data: their profile and every flat membership, active or left.",
+        "operationId": "ExportAccount",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountExportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account": {
+      "delete": {
+        "tags": [
+          "Platform"
+        ],
+        "summary": "Deletes the signed-in member's account. The member leaves every flat, and their name shows as a former member there. The last admin of a flat with other members cannot delete the account (409). Requires the antiforgery token in the X-XSRF-TOKEN header.",
+        "operationId": "DeleteAccount",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
           }
         }
       }
@@ -281,78 +414,6 @@
         }
       }
     },
-    "/api/v1/platform/auth/session": {
-      "get": {
-        "tags": [
-          "Platform"
-        ],
-        "summary": "The signed-in member. Returns 401 when there is no session.",
-        "operationId": "GetSession",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        }
-      }
-    },
-    "/api/v1/platform/auth/antiforgery-token": {
-      "get": {
-        "tags": [
-          "Platform"
-        ],
-        "summary": "Issues the antiforgery token that state-changing requests send in the X-XSRF-TOKEN header.",
-        "operationId": "GetAntiforgeryToken",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AntiforgeryTokenResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/platform/auth/sign-out": {
-      "post": {
-        "tags": [
-          "Platform"
-        ],
-        "summary": "Ends the session. Requires the antiforgery token in the X-XSRF-TOKEN header.",
-        "operationId": "SignOut",
-        "parameters": [
-          {
-            "name": "X-XSRF-TOKEN",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request"
-          }
-        }
-      }
-    },
     "/api/v1/flats/{flatId}/leave": {
       "post": {
         "tags": [
@@ -385,6 +446,44 @@
       }
     },
     "/api/v1/flats/{flatId}/members/{userId}": {
+      "delete": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Removes a member from a flat. Only an admin may do it; members get 403. Admins cannot remove themselves: they use the leave endpoint. Other flats and non-members answer 404.",
+        "operationId": "RemoveFlatMember",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
       "patch": {
         "tags": [
           "Flats"
@@ -425,23 +524,19 @@
           "204": {
             "description": "No Content"
           },
-          "403": {
-            "description": "Forbidden"
-          },
           "404": {
             "description": "Not Found"
-          },
-          "409": {
-            "description": "Conflict"
           }
         }
-      },
-      "delete": {
+      }
+    },
+    "/api/v1/flats/{flatId}/invite-code": {
+      "get": {
         "tags": [
           "Flats"
         ],
-        "summary": "Removes a member from a flat. Only an admin may do it; members get 403. Admins cannot remove themselves: they use the leave endpoint. Other flats and non-members answer 404.",
-        "operationId": "RemoveFlatMember",
+        "summary": "Gets the invite code of a flat and when it expires. Only an admin may read it; members get 403.",
+        "operationId": "GetFlatInviteCode",
         "parameters": [
           {
             "name": "flatId",
@@ -451,9 +546,35 @@
               "type": "string",
               "format": "uuid"
             }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeResponse"
+                }
+              }
+            }
           },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/flats/{flatId}/invite-code/regenerate": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Replaces the invite code of a flat with a new one that lasts seven days. The previous code stops working. Only an admin may do it; members get 403.",
+        "operationId": "RegenerateFlatInviteCode",
+        "parameters": [
           {
-            "name": "userId",
+            "name": "flatId",
             "in": "path",
             "required": true,
             "schema": {
@@ -463,14 +584,15 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "403": {
-            "description": "Forbidden"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteCodeResponse"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found"
@@ -605,13 +727,45 @@
         }
       }
     },
-    "/api/v1/flats/{flatId}/invite-code": {
+    "/api/v1/chores/{flatId}": {
       "get": {
         "tags": [
-          "Flats"
+          "Chores"
         ],
-        "summary": "Gets the invite code of a flat and when it expires. Only an admin may read it; members get 403.",
-        "operationId": "GetFlatInviteCode",
+        "summary": "Lists the chores of a flat, by name. Only active members of the flat may read them; others get 404.",
+        "operationId": "ListChores",
+        "parameters": [
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChoreResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Creates a chore in a flat. Its participants must be active members of the flat (422 otherwise).",
+        "operationId": "CreateChore",
         "parameters": [
           {
             "name": "flatId",
@@ -623,33 +777,56 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CreateChoreRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "OK",
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InviteCodeResponse"
+                  "$ref": "#/components/schemas/ChoreResponse"
                 }
               }
             }
           },
-          "404": {
-            "description": "Not Found"
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/v1/flats/{flatId}/invite-code/regenerate": {
-      "post": {
+    "/api/v1/chores/{flatId}/{choreId}": {
+      "patch": {
         "tags": [
-          "Flats"
+          "Chores"
         ],
-        "summary": "Replaces the invite code of a flat with a new one that lasts seven days. The previous code stops working. Only an admin may do it; members get 403.",
-        "operationId": "RegenerateFlatInviteCode",
+        "summary": "Changes or deactivates a chore of a flat. Only the fields sent are changed. A chore of another flat answers 404.",
+        "operationId": "UpdateChore",
         "parameters": [
           {
-            "name": "flatId",
+            "name": "choreId",
             "in": "path",
             "required": true,
             "schema": {
@@ -658,13 +835,39 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/UpdateChoreRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InviteCodeResponse"
+                  "$ref": "#/components/schemas/ChoreResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
                 }
               }
             }
@@ -678,6 +881,210 @@
   },
   "components": {
     "schemas": {
+      "AccountExportResponse": {
+        "required": [
+          "exportedAt",
+          "profile",
+          "memberships"
+        ],
+        "type": "object",
+        "properties": {
+          "exportedAt": {
+            "type": "string",
+            "description": "When the export was made, in UTC.",
+            "format": "date-time"
+          },
+          "profile": {
+            "description": "The member's profile.",
+            "$ref": "#/components/schemas/AccountProfileExport"
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountMembershipExport"
+            },
+            "description": "Every flat the member has been in, oldest first."
+          }
+        },
+        "description": "The data export of the signed-in member: their profile and every membership."
+      },
+      "AccountMembershipExport": {
+        "required": [
+          "flatId",
+          "flatName",
+          "role",
+          "joinedAt",
+          "leftAt"
+        ],
+        "type": "object",
+        "properties": {
+          "flatId": {
+            "type": "string",
+            "description": "The flat.",
+            "format": "uuid"
+          },
+          "flatName": {
+            "type": "string",
+            "description": "Name of the flat."
+          },
+          "role": {
+            "type": "string",
+            "description": "`Admin` or `Member`."
+          },
+          "joinedAt": {
+            "type": "string",
+            "description": "When the member joined, in UTC.",
+            "format": "date-time"
+          },
+          "leftAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the member left, in UTC, or null while the membership is active.",
+            "format": "date-time"
+          }
+        },
+        "description": "One membership of the member, active or left, in a flat."
+      },
+      "AccountProfileExport": {
+        "required": [
+          "displayName",
+          "email",
+          "avatarUrl",
+          "preferredLanguage",
+          "timeZoneId",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "description": "Name shown to the other members of a flat."
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Email the sign-in provider reported, or null. Kept for contact only."
+          },
+          "avatarUrl": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Picture URL, or null."
+          },
+          "preferredLanguage": {
+            "type": "string",
+            "description": "Interface language, `es` or `en`."
+          },
+          "timeZoneId": {
+            "type": "string",
+            "description": "IANA time zone identifier."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the account was created, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "The personal data of the signed-in member, as the export bundle holds it."
+      },
+      "AntiforgeryTokenResponse": {
+        "required": [
+          "requestToken"
+        ],
+        "type": "object",
+        "properties": {
+          "requestToken": {
+            "type": "string",
+            "description": "The antiforgery request token."
+          }
+        },
+        "description": "Token the browser sends in the `X-XSRF-TOKEN` header of a state-changing request."
+      },
+      "ChangeMemberRoleRequest": {
+        "required": [
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Required: `Admin` or `Member`."
+          }
+        },
+        "description": "Request to change a member's role in a flat."
+      },
+      "ChoreResponse": {
+        "required": [
+          "id",
+          "name",
+          "recurrenceUnit",
+          "recurrenceEvery",
+          "weight",
+          "isActive",
+          "participantIds",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the chore.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The chore's name."
+          },
+          "recurrenceUnit": {
+            "type": "string",
+            "description": "`Day`, `Week` or `Month`."
+          },
+          "recurrenceEvery": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many units pass between two turns.",
+            "format": "int32"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How much effort the chore counts for.",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether the chore takes part in the rotation."
+          },
+          "participantIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The accounts that take part in the rotation."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the chore was created, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A chore as the API returns it."
+      },
       "ClockSampleResponse": {
         "required": [
           "utcNow"
@@ -691,6 +1098,64 @@
           }
         },
         "description": "Response of the clock sample: the current instant as the application's clock reports it."
+      },
+      "CreateChoreRequest": {
+        "required": [
+          "name",
+          "recurrenceUnit",
+          "recurrenceEvery",
+          "weight",
+          "participantIds"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The chore's name, at most 80 characters after trimming."
+          },
+          "recurrenceUnit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`Day`, `Week` or `Month`."
+          },
+          "recurrenceEvery": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "How many units pass between two turns, from 1 to 365.",
+            "format": "int32"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "How much effort the chore counts for, from 1 to 5.",
+            "format": "int32"
+          },
+          "participantIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The accounts that take part in the rotation: at least one, each an active member of the flat."
+          }
+        },
+        "description": "Request to create a chore. Every field is required."
       },
       "CreateFlatRequest": {
         "required": [
@@ -776,6 +1241,171 @@
         },
         "description": "A flat as seen by one of its members."
       },
+      "HttpValidationProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "InviteCodeResponse": {
+        "required": [
+          "code",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code, in upper case."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the code stops working, in UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A flat's invite code and the moment it stops working."
+      },
+      "NotificationPageResponse": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "description": "The notifications of this page."
+          },
+          "page": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The page number, starting at 1.",
+            "format": "int32"
+          },
+          "pageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of items asked for per page.",
+            "format": "int32"
+          },
+          "totalCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "How many notifications match the query, across all pages.",
+            "format": "int32"
+          }
+        },
+        "description": "One page of the inbox, newest first."
+      },
+      "NotificationResponse": {
+        "required": [
+          "id",
+          "flatId",
+          "category",
+          "text",
+          "linkTarget",
+          "createdAt",
+          "readAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the notification.",
+            "format": "uuid"
+          },
+          "flatId": {
+            "type": "string",
+            "description": "The flat the notification is about.",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string",
+            "description": "The area it comes from: `Flats`, `Chores` or `Maintenance`."
+          },
+          "text": {
+            "type": "string",
+            "description": "The text, rendered in the recipient's language."
+          },
+          "linkTarget": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A relative path inside Flatly, or null."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the notification was created, in UTC.",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the recipient read it, in UTC. Null while it is unread.",
+            "format": "date-time"
+          }
+        },
+        "description": "A notification as its recipient reads it."
+      },
       "ProfileResponse": {
         "required": [
           "displayName",
@@ -806,6 +1436,90 @@
           }
         },
         "description": "The profile of the signed-in member."
+      },
+      "UnreadCountResponse": {
+        "required": [
+          "count"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The number of unread notifications.",
+            "format": "int32"
+          }
+        },
+        "description": "How many unread notifications the caller has."
+      },
+      "UpdateChoreRequest": {
+        "required": [
+          "name",
+          "recurrenceUnit",
+          "recurrenceEvery",
+          "weight",
+          "participantIds",
+          "isActive"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new name, as for create."
+          },
+          "recurrenceUnit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new unit, as for create."
+          },
+          "recurrenceEvery": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The new interval, as for create.",
+            "format": "int32"
+          },
+          "weight": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "description": "The new weight, as for create.",
+            "format": "int32"
+          },
+          "participantIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The new participants, as for create."
+          },
+          "isActive": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "False deactivates the chore; true activates it again."
+          }
+        },
+        "description": "Request to change a chore. Send only the fields to change; `participantIds` replaces the whole set."
       },
       "UpdateFlatRequest": {
         "required": [
@@ -874,253 +1588,6 @@
           }
         },
         "description": "Request of the sample endpoint that demonstrates field-keyed validation errors."
-      },
-      "SessionResponse": {
-        "type": "object",
-        "required": [
-          "userId",
-          "displayName",
-          "avatarUrl",
-          "preferredLanguage",
-          "timeZoneId"
-        ],
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The Flatly account id."
-          },
-          "displayName": {
-            "type": "string",
-            "description": "Name shown to the other members of a flat."
-          },
-          "avatarUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Picture URL, or null."
-          },
-          "preferredLanguage": {
-            "type": "string",
-            "description": "Interface language, es or en."
-          },
-          "timeZoneId": {
-            "type": "string",
-            "description": "IANA time zone identifier."
-          }
-        }
-      },
-      "AntiforgeryTokenResponse": {
-        "type": "object",
-        "required": [
-          "requestToken"
-        ],
-        "properties": {
-          "requestToken": {
-            "type": "string",
-            "description": "The antiforgery request token."
-          }
-        }
-      },
-      "ChangeMemberRoleRequest": {
-        "required": [
-          "role"
-        ],
-        "type": "object",
-        "properties": {
-          "role": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Required: `Admin` or `Member`."
-          }
-        },
-        "description": "Request to promote or demote a member of a flat."
-      },
-      "NotificationResponse": {
-        "required": [
-          "id",
-          "flatId",
-          "category",
-          "text",
-          "linkTarget",
-          "createdAt",
-          "readAt"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Identifier of the notification.",
-            "format": "uuid"
-          },
-          "flatId": {
-            "type": "string",
-            "description": "The flat the notification is about.",
-            "format": "uuid"
-          },
-          "category": {
-            "type": "string",
-            "description": "The area it comes from: `Flats`, `Chores` or `Maintenance`."
-          },
-          "text": {
-            "type": "string",
-            "description": "The text, rendered in the recipient's language."
-          },
-          "linkTarget": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "A relative path inside Flatly, or null."
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "When the notification was created, in UTC.",
-            "format": "date-time"
-          },
-          "readAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "When the recipient read it, in UTC. Null while it is unread.",
-            "format": "date-time"
-          }
-        },
-        "description": "A notification as its recipient reads it."
-      },
-      "UnreadCountResponse": {
-        "required": [
-          "count"
-        ],
-        "type": "object",
-        "properties": {
-          "count": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "The number of unread notifications.",
-            "format": "int32"
-          }
-        },
-        "description": "How many unread notifications the caller has."
-      },
-      "NotificationPageResponse": {
-        "required": [
-          "items",
-          "page",
-          "pageSize",
-          "totalCount"
-        ],
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/NotificationResponse"
-            },
-            "description": "The notifications of this page."
-          },
-          "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "The page number, starting at 1.",
-            "format": "int32"
-          },
-          "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "The number of items asked for per page.",
-            "format": "int32"
-          },
-          "totalCount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "description": "How many notifications match the query, across all pages.",
-            "format": "int32"
-          }
-        },
-        "description": "One page of the inbox, newest first."
-      },
-      "HttpValidationProblemDetails": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "title": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "null",
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "detail": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "instance": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "errors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      },
-      "InviteCodeResponse": {
-        "required": [
-          "code",
-          "expiresAt"
-        ],
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "The code, in upper case."
-          },
-          "expiresAt": {
-            "type": "string",
-            "description": "When the code stops working, in UTC.",
-            "format": "date-time"
-          }
-        },
-        "description": "A flat's invite code and the moment it stops working."
       }
     }
   },
@@ -1130,6 +1597,12 @@
     },
     {
       "name": "Flats"
+    },
+    {
+      "name": "Notifications"
+    },
+    {
+      "name": "Chores"
     }
   ]
 }
