@@ -1,0 +1,28 @@
+{
+  "title": "Join a flat",
+  "intro": "Enter the invite code that a member of your flat shared with you.",
+  "codeLabel": "Invite code",
+  "codePlaceholder": "For example, ABCD2345",
+  "submit": "Join flat",
+  "submitting": "Joining…",
+  "joining": "Joining your flat…",
+  "back": "Back",
+  "errors": {
+    "notFound": {
+      "title": "We could not find a flat with this invite code.",
+      "hint": "Check the code for typos, or ask a member of the flat for a new one."
+    },
+    "expired": {
+      "title": "This invite code has expired.",
+      "hint": "Ask an admin of the flat for a new invite code."
+    },
+    "throttled": {
+      "title": "Too many attempts in a short time.",
+      "hint": "Wait a few minutes, then try again."
+    },
+    "generic": {
+      "title": "We could not join the flat.",
+      "hint": "Check your connection and try again."
+    }
+  }
+}

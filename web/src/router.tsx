@@ -3,6 +3,7 @@ import { RequireAuth } from '@/components/layout/Guards'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { FlatHome } from '@/pages/FlatHome'
+import { JoinFlat } from '@/pages/JoinFlat'
 import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
 import { NotFound } from '@/pages/NotFound'
@@ -20,6 +21,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Home /> },
           { path: 'f/:flatId', element: <FlatHome /> },
+          { path: 'join', element: <JoinFlat /> },
           { path: '*', element: <NotFound /> },
         ],
       },

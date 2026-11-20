@@ -674,6 +674,52 @@
           }
         }
       }
+    },
+    "/api/v1/flats/join": {
+      "post": {
+        "tags": [
+          "Flats"
+        ],
+        "summary": "Joins a flat with its invite code as a Member. Joining again while still a member changes nothing. An unknown code answers 404 and an expired code answers 410. Attempts are rate-limited per account and answer 429.",
+        "operationId": "JoinFlat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinFlatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "410": {
+            "description": "Gone"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1121,6 +1167,22 @@
           }
         },
         "description": "A flat's invite code and the moment it stops working."
+      },
+      "JoinFlatRequest": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The invite code. Required; case-insensitive and ignores surrounding spaces."
+          }
+        },
+        "description": "Request to join a flat with its invite code."
       }
     }
   },

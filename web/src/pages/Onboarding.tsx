@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
 import { useCreateFlat } from '@/api/flats'
 
 /** Matches the API limit: a flat name is at most 80 characters after trimming. */
@@ -13,10 +14,11 @@ const secondaryButtonClass =
 
 /**
  * Shown to a signed-in member who belongs to no flat yet: a choice between creating a flat and
- * joining one. Joining by code is not built yet, so its option is shown but unavailable.
+ * joining one with an invite code.
  */
 export function Onboarding() {
   const { t } = useTranslation('onboarding')
+  const navigate = useNavigate()
   const [step, setStep] = useState<'choose' | 'create'>('choose')
 
   if (step === 'create') {
@@ -33,10 +35,9 @@ export function Onboarding() {
         <button type="button" className={primaryButtonClass} onClick={() => setStep('create')}>
           {t('choose.create')}
         </button>
-        <button type="button" className={secondaryButtonClass} disabled>
+        <button type="button" className={secondaryButtonClass} onClick={() => navigate('/join')}>
           {t('choose.join')}
         </button>
-        <p className="text-sm text-ink-muted">{t('choose.joinUnavailable')}</p>
       </div>
     </section>
   )

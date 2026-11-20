@@ -3,8 +3,7 @@
     "title": "Bienvenida a Flatly",
     "intro": "Crea un piso para las personas con las que lo compartes, o únete a uno que ya exista.",
     "create": "Crear un piso",
-    "join": "Unirme a un piso",
-    "joinUnavailable": "Unirse con un código de invitación llegará pronto."
+    "join": "Unirme a un piso"
   },
   "create": {
     "title": "Crea tu piso",

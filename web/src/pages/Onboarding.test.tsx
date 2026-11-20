@@ -20,6 +20,7 @@ function renderHome() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/f/:flatId" element={<CurrentPath />} />
+          <Route path="/join" element={<CurrentPath />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -27,13 +28,22 @@ function renderHome() {
 }
 
 describe('onboarding', () => {
-  it('offers creating a flat and marks joining as unavailable for a member with no flat', async () => {
+  it('offers creating a flat or joining one for a member with no flat', async () => {
     server.use(http.get(flatsUrl, () => HttpResponse.json([])))
     renderHome()
 
     expect(await screen.findByRole('heading', { name: 'Welcome to Flatly' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Create a flat' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Join a flat' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Join a flat' })).toBeEnabled()
+  })
+
+  it('takes a member who chooses to join to the join page', async () => {
+    server.use(http.get(flatsUrl, () => HttpResponse.json([])))
+    renderHome()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Join a flat' }))
+
+    expect(await screen.findByTestId('path')).toHaveTextContent('/join')
   })
 
   it('creates a flat with the trimmed name and then lands on its home', async () => {
