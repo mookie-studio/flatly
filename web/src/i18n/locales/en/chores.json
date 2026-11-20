@@ -1,0 +1,45 @@
+{
+  "newTitle": "New chore",
+  "editTitle": "Edit chore",
+  "loading": "Loading…",
+  "loadError": "We could not load the chore. Try again later.",
+  "notFound": "This chore does not exist or you are not a member of this flat.",
+  "fields": {
+    "name": "Name",
+    "recurrence": "Repeats",
+    "every": "Every",
+    "unit": "Unit",
+    "weight": "Weight (effort, from 1 to 5)",
+    "participants": "Take part in the rotation"
+  },
+  "units": {
+    "Day": "Days",
+    "Week": "Weeks",
+    "Month": "Months"
+  },
+  "validation": {
+    "nameRequired": "Enter a name for the chore.",
+    "nameTooLong": "The name can have at most 80 characters.",
+    "everyRange": "Enter a whole number from 1 to 365.",
+    "weightRange": "Choose a weight from 1 to 5.",
+    "participantsRequired": "Choose at least one person.",
+    "fieldInvalid": "Check this field.",
+    "participantsInvalid": "You can only choose active members of the flat."
+  },
+  "status": {
+    "inactive": "Deactivated"
+  },
+  "actions": {
+    "create": "Create chore",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "back": "Back to the flat",
+    "deactivate": "Deactivate chore",
+    "activate": "Activate again",
+    "confirmDeactivate": "The chore will stop counting in the turns. You can activate it again later.",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
+  "saveError": "We could not save the chore. Check the details and try again.",
+  "changeError": "We could not change the chore. Try again."
+}

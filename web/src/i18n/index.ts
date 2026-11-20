@@ -3,12 +3,14 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 
 import enAuth from './locales/en/auth.json'
+import enChores from './locales/en/chores.json'
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
 import enJoin from './locales/en/join.json'
 import enNotFound from './locales/en/notFound.json'
 import enOnboarding from './locales/en/onboarding.json'
 import esAuth from './locales/es/auth.json'
+import esChores from './locales/es/chores.json'
 import esCommon from './locales/es/common.json'
 import esHome from './locales/es/home.json'
 import esJoin from './locales/es/join.json'
@@ -28,6 +30,7 @@ export const resources = {
   es: {
     common: esCommon,
     auth: esAuth,
+    chores: esChores,
     home: esHome,
     join: esJoin,
     notFound: esNotFound,
@@ -37,6 +40,7 @@ export const resources = {
   en: {
     common: enCommon,
     auth: enAuth,
+    chores: enChores,
     home: enHome,
     join: enJoin,
     notFound: enNotFound,

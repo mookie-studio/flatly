@@ -314,6 +314,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chores/{flatId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lists the chores of a flat, by name. Only active members of the flat may read them; others get 404. */
+        get: operations["ListChores"];
+        put?: never;
+        /** Creates a chore in a flat. Its participants must be active members of the flat (400 otherwise). */
+        post: operations["CreateChore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chores/{flatId}/{choreId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Changes or deactivates a chore of a flat. Only the fields sent are changed. A chore of another flat answers 404. */
+        patch: operations["UpdateChore"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -504,6 +539,65 @@ export interface components {
         JoinFlatRequest: {
             /** @description The invite code. Required; case-insensitive and ignores surrounding spaces. */
             code: null | string;
+        };
+        /** @description Request to create a chore. Every field is required. */
+        CreateChoreRequest: {
+            /** @description The chore's name, at most 80 characters after trimming. */
+            name?: null | string;
+            /** @description `Day`, `Week` or `Month`. */
+            recurrenceUnit?: null | string;
+            /**
+             * Format: int32
+             * @description How many units pass between two turns, from 1 to 365.
+             */
+            recurrenceEvery?: null | number;
+            /**
+             * Format: int32
+             * @description How much effort the chore counts for, from 1 to 5.
+             */
+            weight?: null | number;
+            /** @description The accounts that take part in the rotation: at least one, each an active member of the flat. */
+            participantIds?: null | string[];
+        };
+        /** @description Request to change a chore. Send only the fields to change; participantIds replaces the whole set. */
+        UpdateChoreRequest: {
+            /** @description The chore's name, at most 80 characters after trimming. */
+            name?: null | string;
+            /** @description `Day`, `Week` or `Month`. */
+            recurrenceUnit?: null | string;
+            /**
+             * Format: int32
+             * @description How many units pass between two turns, from 1 to 365.
+             */
+            recurrenceEvery?: null | number;
+            /**
+             * Format: int32
+             * @description How much effort the chore counts for, from 1 to 5.
+             */
+            weight?: null | number;
+            /** @description The accounts that take part in the rotation: at least one, each an active member of the flat. */
+            participantIds?: null | string[];
+            /** @description False deactivates the chore; true activates it again. */
+            isActive?: null | boolean;
+        };
+        /** @description A chore as the API returns it. */
+        ChoreResponse: {
+            /**
+             * Format: uuid
+             * @description Identifier of the chore.
+             */
+            id: string;
+            name: string;
+            /** @description `Day`, `Week` or `Month`. */
+            recurrenceUnit: string;
+            /** Format: int32 */
+            recurrenceEvery: number;
+            /** Format: int32 */
+            weight: number;
+            isActive: boolean;
+            participantIds: string[];
+            /** Format: date-time */
+            createdAt: string;
         };
     };
     responses: never;
@@ -1141,6 +1235,122 @@ export interface operations {
             };
             /** @description Too Many Requests */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ListChores: {
+        parameters: {
+            query?: {
+                includeInactive?: boolean;
+            };
+            header?: never;
+            path: {
+                flatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChoreResponse"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CreateChore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                flatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateChoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChoreResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    UpdateChore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                flatId: string;
+                choreId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateChoreRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChoreResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["HttpValidationProblemDetails"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
