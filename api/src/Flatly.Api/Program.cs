@@ -28,6 +28,8 @@ if (app.Environment.IsDevelopment())
 // Authentication before authorization, and both before the endpoints. Every endpoint needs a signed-in member unless it is AllowAnonymous.
 app.UseAuthentication();
 app.UseAuthorization();
+// After authentication, so the join-flat rate limit can tell accounts apart (see Modules/Flats/FlatsModule).
+app.UseRateLimiter();
 app.UseAntiforgery();
 
 app.MapDefaultEndpoints();

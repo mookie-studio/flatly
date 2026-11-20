@@ -4,6 +4,7 @@ using Flatly.Api.Data;
 using Flatly.Api.Data.Tenancy;
 using Flatly.Api.IntegrationTests.Fakes;
 using Flatly.Api.IntegrationTests.Infrastructure;
+using Flatly.Api.Modules.Flats;
 using Flatly.Api.Modules.Flats.Domain;
 using Flatly.Api.Modules.Flats.Endpoints;
 using Flatly.Api.Modules.Platform.Identity;
@@ -633,6 +634,185 @@ public sealed class FlatsEndpointsTests(PostgresContainer postgres)
             .ReadFromJsonAsync<FlatResponse>();
 
         await FlatIsolation.AssertNotFoundForNonMemberAsync(brunoClient, anasFlat!.Id, id => $"{FlatsUrl}/{id}/invite-code");
+    }
+
+    [SkippableFact]
+    public async Task JoiningWithAValidCodeMakesTheAccountAMember()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "join-ana");
+        var bruno = await CreateAccountAsync(factory, "join-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Join flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var invite = await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code");
+
+        var response = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(invite!.Code));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var joined = await response.Content.ReadFromJsonAsync<FlatResponse>();
+        Assert.Equal(flat.Id, joined!.Id);
+        Assert.Equal("Join flat", joined.Name);
+        Assert.Equal("Member", joined.Role);
+        var membership = await FindMembershipAsync(factory, flat.Id, bruno.Provider, bruno.Subject);
+        Assert.Equal(MemberRole.Member, membership.Role);
+        Assert.Null(membership.LeftAt);
+    }
+
+    [SkippableFact]
+    public async Task JoiningTwiceChangesNothing()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "join-twice-ana");
+        var bruno = await CreateAccountAsync(factory, "join-twice-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Twice flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var code = (await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code"))!.Code;
+
+        var first = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(code));
+        var second = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(code));
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.Equal("Member", (await second.Content.ReadFromJsonAsync<FlatResponse>())!.Role);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
+        Assert.Equal(1, await database.Memberships.IgnoreQueryFilters()
+            .CountAsync(item => item.FlatId == flat.Id && item.LeftAt == null && item.Role == MemberRole.Member));
+    }
+
+    [SkippableFact]
+    public async Task JoiningAsTheAdminOfTheFlatKeepsTheAdminRole()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "join-admin-ana");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Own flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var code = (await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code"))!.Code;
+
+        var response = await anaClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(code));
+
+        Assert.Equal("Admin", (await response.Content.ReadFromJsonAsync<FlatResponse>())!.Role);
+        Assert.Equal(MemberRole.Admin, (await FindMembershipAsync(factory, flat.Id, ana.Provider, ana.Subject)).Role);
+    }
+
+    [SkippableFact]
+    public async Task TheCodeIsReadCaseInsensitivelyAndIgnoresSpaces()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "join-case-ana");
+        var bruno = await CreateAccountAsync(factory, "join-case-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Case flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var code = (await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code"))!.Code;
+
+        var response = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest($"  {code.ToLowerInvariant()} "));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task AnUnknownCodeAnswersNotFound()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var bruno = await CreateAccountAsync(factory, "join-unknown-bruno");
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+
+        var response = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest("ZZZZZZZZ"));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Contains("Invite code not found", await response.Content.ReadAsStringAsync());
+    }
+
+    [SkippableFact]
+    public async Task AnExpiredCodeAnswersGoneAndIsDistinctFromAWrongOne()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "join-expired-ana");
+        var bruno = await CreateAccountAsync(factory, "join-expired-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Expired flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var code = (await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code"))!.Code;
+        factory.Clock.Advance(TimeSpan.FromDays(7).Add(TimeSpan.FromSeconds(1)));
+
+        var response = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(code));
+
+        Assert.Equal(HttpStatusCode.Gone, response.StatusCode);
+        Assert.Contains("Invite code has expired", await response.Content.ReadAsStringAsync());
+    }
+
+    [SkippableFact]
+    public async Task AnEmptyCodeIsRejected()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var bruno = await CreateAccountAsync(factory, "join-invalid-bruno");
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+
+        var empty = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest("  "));
+        var wrongLength = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest("ABC"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, wrongLength.StatusCode);
+        Assert.Contains("code", await empty.Content.ReadAsStringAsync());
+    }
+
+    [SkippableFact]
+    public async Task RejoiningAfterLeavingCreatesANewMembership()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "rejoin-ana");
+        var bruno = await CreateAccountAsync(factory, "rejoin-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await (await anaClient.PostAsJsonAsync(FlatsUrl, new CreateFlatRequest("Rejoin flat"))).Content
+            .ReadFromJsonAsync<FlatResponse>();
+        var code = (await anaClient.GetFromJsonAsync<InviteCodeResponse>($"{FlatsUrl}/{flat!.Id}/invite-code"))!.Code;
+        await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(code));
+        await LeaveFlatAsync(factory, flat.Id, bruno);
+
+        var response = await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest(code));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
+        var brunoId = (await database.UserLogins
+            .SingleAsync(login => login.LoginProvider == bruno.Provider && login.ProviderKey == bruno.Subject)).UserId;
+        var memberships = await database.Memberships.IgnoreQueryFilters()
+            .Where(item => item.FlatId == flat.Id && item.UserId == brunoId)
+            .ToListAsync();
+        // The left membership stays as history; the rejoin is a second row, and it is the only active one.
+        Assert.Equal(2, memberships.Count);
+        var active = Assert.Single(memberships, item => item.LeftAt is null);
+        Assert.Equal(MemberRole.Member, active.Role);
+    }
+
+    [SkippableFact]
+    public async Task RepeatedJoinAttemptsAreThrottledPerAccount()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var bruno = await CreateAccountAsync(factory, "join-throttle-bruno");
+        var carla = await CreateAccountAsync(factory, "join-throttle-carla");
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        using var carlaClient = factory.CreateSignedInClient(carla);
+
+        var statuses = new List<HttpStatusCode>();
+        for (var attempt = 0; attempt < FlatsModule.JoinAttemptsPerWindow + 1; attempt++)
+        {
+            statuses.Add((await brunoClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest("ZZZZZZZZ"))).StatusCode);
+        }
+        var otherAccount = await carlaClient.PostAsJsonAsync($"{FlatsUrl}/join", new JoinFlatRequest("ZZZZZZZZ"));
+
+        Assert.All(statuses.Take(FlatsModule.JoinAttemptsPerWindow), status => Assert.Equal(HttpStatusCode.NotFound, status));
+        Assert.Equal(HttpStatusCode.TooManyRequests, statuses[^1]);
+        Assert.Equal(HttpStatusCode.NotFound, otherAccount.StatusCode);
     }
 
     private static async Task<FakeExternalAccount> CreateAccountAsync(FlatlyApiFactory factory, string name)
