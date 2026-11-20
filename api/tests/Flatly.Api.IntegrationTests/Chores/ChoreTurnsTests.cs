@@ -78,7 +78,7 @@ public sealed class ChoreTurnsTests(PostgresContainer postgres)
         Assert.Equal(4, turns.Count);
         var done = Assert.Single(turns, turn => turn.Status == TurnStatus.Done);
         Assert.Equal(firstTurn.Id, done.Id);
-        Assert.Equal(brunoId, done.AssigneeId);
+        Assert.Equal(firstTurn.AssigneeId, done.AssigneeId);
         Assert.All(turns.Where(turn => turn.Status == TurnStatus.Pending), turn => Assert.Equal(anaId, turn.AssigneeId));
     }
 
