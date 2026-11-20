@@ -1,5 +1,6 @@
 using Flatly.Api.Data;
 using Flatly.Api.Modules.Chores.Domain;
+using Flatly.Api.Modules.Chores.Turns;
 using Flatly.Api.Modules.Chores.Validation;
 using Flatly.Api.Modules.Flats.Scope;
 using Flatly.Api.Validation;
@@ -10,8 +11,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Flatly.Api.Modules.Chores.Endpoints;
 
 /// <summary>
-/// Maps <c>PATCH /{flatId}/{choreId}</c>: changes a chore, or deactivates it with <c>isActive: false</c>. Changing the
-/// chore does not regenerate turns: that belongs to the turn engine.
+/// Maps <c>PATCH /{flatId}/{choreId}</c>: changes a chore, or deactivates it with <c>isActive: false</c>. The future
+/// pending turns of the chore are regenerated; done turns and past turns are kept.
 /// </summary>
 public static class UpdateChoreEndpoint
 {
@@ -29,6 +30,7 @@ public static class UpdateChoreEndpoint
         Guid choreId,
         UpdateChoreRequest? request,
         FlatlyDbContext database,
+        TurnGenerator turns,
         CancellationToken cancellationToken)
     {
         // The body is optional at binding, so a non-member gets 404 from the flat route before this check runs.
@@ -83,7 +85,7 @@ public static class UpdateChoreEndpoint
             ChoreMembers.ReplaceParticipants(chore, request.ParticipantIds);
         }
 
-        await database.SaveChangesAsync(cancellationToken);
+        await turns.RegenerateAsync(chore, cancellationToken);
         return TypedResults.Ok(ChoreResponse.From(chore));
     }
 }

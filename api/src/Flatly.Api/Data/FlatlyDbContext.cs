@@ -31,6 +31,9 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
     /// <summary>Members who take part in the rotation of a chore, flat-scoped.</summary>
     public DbSet<ChoreParticipant> ChoreParticipants => Set<ChoreParticipant>();
 
+    /// <summary>The turns of the chores of the flat in scope.</summary>
+    public DbSet<Turn> Turns => Set<Turn>();
+
     /// <summary>In-app notifications, one row per recipient. Not flat-scoped: the inbox spans every flat of the member.</summary>
     public DbSet<Notification> Notifications => Set<Notification>();
 
@@ -87,6 +90,7 @@ public class FlatlyDbContext : IdentityUserContext<FlatlyUser, Guid>
         ChoresModelConfiguration.Configure(builder);
         FilterByCurrentFlat<Chore>(builder);
         FilterByCurrentFlat<ChoreParticipant>(builder);
+        FilterByCurrentFlat<Turn>(builder);
 
         NotificationsModelConfiguration.Configure(builder);
     }

@@ -1,6 +1,8 @@
 using Flatly.Api.Modules.Chores.Endpoints;
+using Flatly.Api.Modules.Chores.Turns;
 using Flatly.Api.Modules.Chores.Validation;
 using Flatly.Api.Validation;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Flatly.Api.Modules.Chores;
 
@@ -15,6 +17,9 @@ public static class ChoresModule
     {
         services.AddSingleton<IRequestValidator<CreateChoreRequest>, CreateChoreRequestValidator>();
         services.AddSingleton<IRequestValidator<UpdateChoreRequest>, UpdateChoreRequestValidator>();
+        services.TryAddScoped<TurnGenerator>();
+        services.TryAddTransient<TurnHorizonJobs>();
+        services.AddHostedService<TurnHorizonSchedule>();
         return services;
     }
 

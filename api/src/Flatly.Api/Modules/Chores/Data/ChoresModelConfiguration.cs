@@ -9,7 +9,7 @@ namespace Flatly.Api.Modules.Chores.Data;
 /// <summary>Maps the chores tables. Called by <c>FlatlyDbContext</c> when it builds its model.</summary>
 public static class ChoresModelConfiguration
 {
-    /// <summary>Adds the <c>chores</c> and <c>chore_participants</c> tables to the model.</summary>
+    /// <summary>Adds the <c>chores</c>, <c>chore_participants</c> and <c>turns</c> tables to the model.</summary>
     public static void Configure(ModelBuilder builder)
     {
         builder.Entity<Chore>(chore =>
@@ -54,6 +54,40 @@ public static class ChoresModelConfiguration
                 .WithMany()
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<Turn>(turn =>
+        {
+            turn.ToTable("turns");
+            turn.Property(t => t.DueOn).IsRequired();
+            turn.Property(t => t.Status).HasConversion<string>().HasMaxLength(8).IsRequired();
+            turn.Property(t => t.WeightSnapshot).IsRequired();
+            turn.Property(t => t.CreatedAt).IsRequired();
+            turn.HasOne<Flat>()
+                .WithMany()
+                .HasForeignKey(t => t.FlatId)
+                .OnDelete(DeleteBehavior.Restrict);
+            turn.HasOne<Chore>()
+                .WithMany()
+                .HasForeignKey(t => t.ChoreId)
+                .OnDelete(DeleteBehavior.Cascade);
+            turn.HasOne<FlatlyUser>()
+                .WithMany()
+                .HasForeignKey(t => t.AssigneeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // One turn per chore and due day: generating the same occurrence twice is impossible, even under concurrency.
+            turn.HasIndex(t => new { t.ChoreId, t.DueOn }).IsUnique();
+            // A flat's turns are read by due day, for the rotation window and the horizon.
+            turn.HasIndex(t => new { t.FlatId, t.DueOn });
+            turn.ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "ck_turns_status",
+                    $"status in ('{nameof(TurnStatus.Pending)}', '{nameof(TurnStatus.Done)}')");
+                table.HasCheckConstraint(
+                    "ck_turns_weight_snapshot",
+                    $"weight_snapshot between {ChoreRules.MinWeight} and {ChoreRules.MaxWeight}");
+            });
         });
     }
 }

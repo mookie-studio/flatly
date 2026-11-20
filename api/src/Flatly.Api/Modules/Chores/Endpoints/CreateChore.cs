@@ -1,6 +1,7 @@
 using Flatly.Api.Data;
 using Flatly.Api.Modules.Chores;
 using Flatly.Api.Modules.Chores.Domain;
+using Flatly.Api.Modules.Chores.Turns;
 using Flatly.Api.Modules.Chores.Validation;
 using Flatly.Api.Modules.Flats.Scope;
 using Flatly.Api.Validation;
@@ -28,6 +29,7 @@ public static class CreateChoreEndpoint
         CreateChoreRequest? request,
         FlatlyDbContext database,
         TimeProvider clock,
+        TurnGenerator turns,
         CancellationToken cancellationToken)
     {
         // The body is optional at binding, so a non-member gets 404 from the flat route before this check runs.
@@ -56,7 +58,8 @@ public static class CreateChoreEndpoint
         };
         ChoreMembers.ReplaceParticipants(chore, participantIds);
         database.Chores.Add(chore);
-        await database.SaveChangesAsync(cancellationToken);
+        // Saves the chore with its first turns in one transaction, so either both exist or neither does.
+        await turns.RegenerateAsync(chore, cancellationToken);
 
         return TypedResults.Created($"{ChoresModule.RoutePrefix}/{flatId}/{chore.Id}", ChoreResponse.From(chore));
     }
