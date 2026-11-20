@@ -78,7 +78,7 @@ The connection string is `ConnectionStrings:flatly`. Aspire injects it from the 
 
 - Migrations are additive only, so the previous version keeps working on the new schema (see [ADR-001](../docs/adr/0001-stack-and-deployment.md)).
 
-The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). `AddNotifications` creates `notifications` (one row per recipient). The feature tasks add their entities and their migrations.
+The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). `AddNotifications` creates `notifications` (one row per recipient). `AddChores` creates `chores` and `chore_participants`. The feature tasks add their entities and their migrations.
 
 ### Flats and memberships
 
@@ -116,6 +116,18 @@ The session is an HttpOnly, Secure, `SameSite=None` cookie (`Flatly.Session`) is
 Modules notify through `INotificationService.NotifyNowAsync`, which writes one row per recipient in one save. Every recipient must be an active member of the flat, otherwise the call throws, so a former member never receives the flat's activity. Email and scheduled reminders are separate tasks (#13).
 
 The endpoints are `GET /api/v1/notifications` (paged, newest first, `unread=true` for unread only), `GET /api/v1/notifications/unread-count`, `POST /api/v1/notifications/{id}/read` and `POST /api/v1/notifications/read-all`. The inbox only shows notifications about flats the caller is still an active member of, and another member's notification answers 404.
+
+### Chores
+
+`Modules/Chores` holds the chores of a flat (MVP1, #89). A chore has a name, a recurrence (a unit `Day`, `Week` or `Month` and an interval from 1 to 365, so every two weeks is `Week` with 2), a weight from 1 to 5 and its participants, who must be active members of the flat. Deactivating a chore keeps its row and takes it out of the rotation.
+
+The endpoints sit under the flat route (`MapFlatScope`), so a non-member gets 404:
+
+- `GET /api/v1/chores/{flatId}` lists the active chores by name. `?includeInactive=true` adds the deactivated ones.
+- `POST /api/v1/chores/{flatId}` creates a chore. Every field is required.
+- `PATCH /api/v1/chores/{flatId}/{choreId}` changes only the fields sent. Sending `participantIds` replaces the whole set; `isActive: false` deactivates the chore.
+
+Every member may create and edit chores. Turn generation is a separate task, and `WeightedRotation` (`Modules/Chores/Rotation`) is the pure rotation algorithm it will use.
 
 ## Module convention
 
