@@ -120,6 +120,7 @@ public sealed class TurnGenerator(FlatlyDbContext database, TimeProvider clock)
                 Status = TurnStatus.Pending,
                 WeightSnapshot = turn.Weight,
                 CreatedAt = now,
+                DoneAt = null,
             });
         }
     }

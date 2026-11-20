@@ -63,6 +63,7 @@ public static class ChoresModelConfiguration
             turn.Property(t => t.Status).HasConversion<string>().HasMaxLength(8).IsRequired();
             turn.Property(t => t.WeightSnapshot).IsRequired();
             turn.Property(t => t.CreatedAt).IsRequired();
+            turn.Property(t => t.DoneAt);
             turn.HasOne<Flat>()
                 .WithMany()
                 .HasForeignKey(t => t.FlatId)
@@ -84,6 +85,10 @@ public static class ChoresModelConfiguration
                 table.HasCheckConstraint(
                     "ck_turns_status",
                     $"status in ('{nameof(TurnStatus.Pending)}', '{nameof(TurnStatus.Done)}')");
+                // A turn has a done time exactly when it is done.
+                table.HasCheckConstraint(
+                    "ck_turns_done_at",
+                    $"(status = '{nameof(TurnStatus.Done)}') = (done_at is not null)");
                 table.HasCheckConstraint(
                     "ck_turns_weight_snapshot",
                     $"weight_snapshot between {ChoreRules.MinWeight} and {ChoreRules.MaxWeight}");

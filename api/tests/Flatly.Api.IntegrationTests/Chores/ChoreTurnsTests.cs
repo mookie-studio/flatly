@@ -25,6 +25,7 @@ public sealed class ChoreTurnsTests(PostgresContainer postgres)
     private static readonly DateTimeOffset Start = new(2026, 11, 19, 9, 0, 0, TimeSpan.Zero);
     private const string FlatsUrl = "/api/v1/flats";
     private const string ChoresUrl = "/api/v1/chores";
+    private const string Bins = "Bins";
 
     [SkippableFact]
     public async Task CreatingAChoreGivesItsTurnsForTheNextFourWeeks()
@@ -107,6 +108,91 @@ public sealed class ChoreTurnsTests(PostgresContainer postgres)
         Assert.Contains(turns, turn => turn.DueOn == DateOnly.FromDateTime(Start.AddDays(35).UtcDateTime));
     }
 
+    [SkippableFact]
+    public async Task TheAssigneeMarksATurnDoneAndUndoesIt()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "turns-done-ana");
+        var bruno = await CreateAccountAsync(factory, "turns-done-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        using var brunoClient = factory.CreateSignedInClient(bruno);
+        var flat = await CreateFlatAsync(anaClient, "Turns done flat");
+        await AddMemberAsync(factory, flat.Id, bruno);
+        var anaId = await UserIdAsync(factory, ana);
+        var brunoId = await UserIdAsync(factory, bruno);
+        var created = await PostChoreAsync(anaClient, flat.Id, [anaId, brunoId]);
+        var turn = (await TurnsOfChoreAsync(factory, created.Id)).First();
+        var (assigneeClient, otherClient) = turn.AssigneeId == anaId ? (anaClient, brunoClient) : (brunoClient, anaClient);
+        var done = $"{ChoresUrl}/{flat.Id}/turns/{turn.Id}/done";
+        var undo = $"{ChoresUrl}/{flat.Id}/turns/{turn.Id}/undo";
+
+        var refused = await otherClient.PostAsync(done, null);
+        Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+
+        var first = await assigneeClient.PostAsync(done, null);
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        var marked = await first.Content.ReadFromJsonAsync<TurnResponse>();
+        Assert.Equal("Done", marked!.Status);
+        Assert.Equal(Start, marked.DoneAt);
+
+        // Marking again keeps the first done time.
+        factory.Clock.Advance(TimeSpan.FromHours(1));
+        var again = await (await assigneeClient.PostAsync(done, null)).Content.ReadFromJsonAsync<TurnResponse>();
+        Assert.Equal(Start, again!.DoneAt);
+
+        var undone = await (await assigneeClient.PostAsync(undo, null)).Content.ReadFromJsonAsync<TurnResponse>();
+        Assert.Equal("Pending", undone!.Status);
+        Assert.Null(undone.DoneAt);
+
+        var stored = (await TurnsOfChoreAsync(factory, created.Id)).First(item => item.Id == turn.Id);
+        Assert.Equal(TurnStatus.Pending, stored.Status);
+        Assert.Null(stored.DoneAt);
+    }
+
+    [SkippableFact]
+    public async Task ListingShowsOverdueTurnsWithTheirAssigneeAndMineFiltersByMember()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "turns-list-ana");
+        var bruno = await CreateAccountAsync(factory, "turns-list-bruno");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await CreateFlatAsync(anaClient, "Turns list flat");
+        await AddMemberAsync(factory, flat.Id, bruno);
+        var anaId = await UserIdAsync(factory, ana);
+        var brunoId = await UserIdAsync(factory, bruno);
+        var created = await PostChoreAsync(anaClient, flat.Id, [anaId, brunoId]);
+        var storedTurns = await TurnsOfChoreAsync(factory, created.Id);
+
+        // Two days later the first turn is overdue. It stays with its assignee when the horizon is extended.
+        factory.Clock.Advance(TimeSpan.FromDays(2));
+        await RunHorizonJobAsync(factory);
+
+        var all = await anaClient.GetFromJsonAsync<List<TurnResponse>>($"{ChoresUrl}/{flat.Id}/turns");
+        var overdue = all!.Single(turn => turn.DueOn == storedTurns[0].DueOn);
+        Assert.True(overdue.IsOverdue);
+        Assert.Equal(storedTurns[0].AssigneeId, overdue.AssigneeId);
+        Assert.Equal(Bins, overdue.ChoreName);
+        Assert.False(all!.Single(turn => turn.DueOn == storedTurns[1].DueOn).IsOverdue);
+
+        var mine = await anaClient.GetFromJsonAsync<List<TurnResponse>>($"{ChoresUrl}/{flat.Id}/turns?mine=true");
+        Assert.All(mine!, turn => Assert.Equal(anaId, turn.AssigneeId));
+        var anaTurns = (await TurnsOfChoreAsync(factory, created.Id)).Count(turn => turn.AssigneeId == anaId);
+        Assert.Equal(anaTurns, mine!.Count);
+    }
+
+    [SkippableFact]
+    public async Task ListingRejectsAPeriodThatEndsBeforeItStarts()
+    {
+        await using var factory = await CreateFactoryAsync();
+        var ana = await CreateAccountAsync(factory, "turns-period-ana");
+        using var anaClient = factory.CreateSignedInClient(ana);
+        var flat = await CreateFlatAsync(anaClient, "Turns period flat");
+
+        var response = await anaClient.GetAsync($"{ChoresUrl}/{flat.Id}/turns?from=2026-12-10&to=2026-12-01");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private static async Task<ChoreResponse> PostChoreAsync(HttpClient client, Guid flatId, Guid[] participants)
     {
         var response = await client.PostAsJsonAsync(
@@ -137,7 +223,9 @@ public sealed class ChoreTurnsTests(PostgresContainer postgres)
         var database = scope.ServiceProvider.GetRequiredService<FlatlyDbContext>();
         await database.Turns.IgnoreQueryFilters()
             .Where(turn => turn.Id == turnId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(turn => turn.Status, TurnStatus.Done));
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(turn => turn.Status, TurnStatus.Done)
+                .SetProperty(turn => turn.DoneAt, Start));
     }
 
     private static async Task<FlatResponse> CreateFlatAsync(HttpClient client, string name)
