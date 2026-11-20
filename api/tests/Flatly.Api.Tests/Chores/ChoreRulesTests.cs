@@ -7,6 +7,7 @@ namespace Flatly.Api.Tests.Chores;
 public sealed class ChoreRulesTests
 {
     private static readonly IReadOnlyList<Guid> OneParticipant = [Guid.Parse("00000000-0000-0000-0000-00000000000a")];
+    private static readonly string[] RequiredOnCreate = ["name", "participantIds", "recurrenceEvery", "recurrenceUnit", "weight"];
 
     private static ChoreFields ValidFields() => new("Bañera", "Week", 2, 4, OneParticipant);
 
@@ -22,7 +23,7 @@ public sealed class ChoreRulesTests
         var errors = ChoreRules.Check(new ChoreFields(null, null, null, null, null), requireAll: true);
 
         Assert.Equal(
-            new[] { "name", "participantIds", "recurrenceEvery", "recurrenceUnit", "weight" },
+            RequiredOnCreate,
             errors.Keys.OrderBy(key => key, StringComparer.Ordinal).ToArray());
     }
 

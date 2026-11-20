@@ -1,6 +1,6 @@
 using Flatly.Api.Data;
-using Flatly.Api.Modules.Chores.Domain;
 using Flatly.Api.Modules.Chores;
+using Flatly.Api.Modules.Chores.Domain;
 using Flatly.Api.Modules.Chores.Validation;
 using Flatly.Api.Modules.Flats.Scope;
 using Flatly.Api.Validation;
