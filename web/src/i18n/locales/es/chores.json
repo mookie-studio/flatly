@@ -1,0 +1,45 @@
+{
+  "newTitle": "Nueva tarea",
+  "editTitle": "Editar tarea",
+  "loading": "Cargando…",
+  "loadError": "No pudimos cargar la tarea. Inténtalo más tarde.",
+  "notFound": "Esta tarea no existe o no eres miembro del piso.",
+  "fields": {
+    "name": "Nombre",
+    "recurrence": "Se repite",
+    "every": "Cada",
+    "unit": "Unidad",
+    "weight": "Peso (esfuerzo, del 1 al 5)",
+    "participants": "Participan en el turno"
+  },
+  "units": {
+    "Day": "Días",
+    "Week": "Semanas",
+    "Month": "Meses"
+  },
+  "validation": {
+    "nameRequired": "Escribe un nombre para la tarea.",
+    "nameTooLong": "El nombre no puede tener más de 80 caracteres.",
+    "everyRange": "Escribe un número entero entre 1 y 365.",
+    "weightRange": "Elige un peso entre 1 y 5.",
+    "participantsRequired": "Elige al menos una persona.",
+    "fieldInvalid": "Revisa este campo.",
+    "participantsInvalid": "Solo puedes elegir miembros activos del piso."
+  },
+  "status": {
+    "inactive": "Desactivada"
+  },
+  "actions": {
+    "create": "Crear tarea",
+    "save": "Guardar cambios",
+    "saving": "Guardando…",
+    "back": "Volver al piso",
+    "deactivate": "Desactivar tarea",
+    "activate": "Volver a activar",
+    "confirmDeactivate": "La tarea dejará de contar en los turnos. Podrás volver a activarla.",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
+  "saveError": "No pudimos guardar la tarea. Revisa los datos e inténtalo de nuevo.",
+  "changeError": "No pudimos cambiar la tarea. Inténtalo de nuevo."
+}

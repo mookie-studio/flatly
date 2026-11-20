@@ -2,6 +2,7 @@ import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react
 import { RequireAuth } from '@/components/layout/Guards'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { PublicLayout } from '@/components/layout/PublicLayout'
+import { ChoreEditor } from '@/pages/ChoreEditor'
 import { FlatHome } from '@/pages/FlatHome'
 import { JoinFlat } from '@/pages/JoinFlat'
 import { Home } from '@/pages/Home'
@@ -21,6 +22,8 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Home /> },
           { path: 'f/:flatId', element: <FlatHome /> },
+          { path: 'f/:flatId/chores/new', element: <ChoreEditor /> },
+          { path: 'f/:flatId/chores/:choreId', element: <ChoreEditor /> },
           { path: 'join', element: <JoinFlat /> },
           { path: '*', element: <NotFound /> },
         ],

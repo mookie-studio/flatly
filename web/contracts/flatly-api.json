@@ -720,6 +720,170 @@
           }
         }
       }
+    },
+    "/api/v1/chores/{flatId}": {
+      "get": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Lists the chores of a flat, by name. Only active members of the flat may read them; others get 404.",
+        "operationId": "ListChores",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChoreResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Creates a chore in a flat. Its participants must be active members of the flat (400 otherwise).",
+        "operationId": "CreateChore",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateChoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChoreResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/v1/chores/{flatId}/{choreId}": {
+      "patch": {
+        "tags": [
+          "Chores"
+        ],
+        "summary": "Changes or deactivates a chore of a flat. Only the fields sent are changed. A chore of another flat answers 404.",
+        "operationId": "UpdateChore",
+        "parameters": [
+          {
+            "name": "flatId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "choreId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChoreResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1183,6 +1347,157 @@
           }
         },
         "description": "Request to join a flat with its invite code."
+      },
+      "CreateChoreRequest": {
+        "type": "object",
+        "description": "Request to create a chore. Every field is required.",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The chore's name, at most 80 characters after trimming."
+          },
+          "recurrenceUnit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`Day`, `Week` or `Month`."
+          },
+          "recurrenceEvery": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32",
+            "description": "How many units pass between two turns, from 1 to 365."
+          },
+          "weight": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32",
+            "description": "How much effort the chore counts for, from 1 to 5."
+          },
+          "participantIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The accounts that take part in the rotation: at least one, each an active member of the flat."
+          }
+        }
+      },
+      "UpdateChoreRequest": {
+        "type": "object",
+        "description": "Request to change a chore. Send only the fields to change; participantIds replaces the whole set.",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The chore's name, at most 80 characters after trimming."
+          },
+          "recurrenceUnit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`Day`, `Week` or `Month`."
+          },
+          "recurrenceEvery": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32",
+            "description": "How many units pass between two turns, from 1 to 365."
+          },
+          "weight": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32",
+            "description": "How much effort the chore counts for, from 1 to 5."
+          },
+          "participantIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The accounts that take part in the rotation: at least one, each an active member of the flat."
+          },
+          "isActive": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "False deactivates the chore; true activates it again."
+          }
+        }
+      },
+      "ChoreResponse": {
+        "type": "object",
+        "description": "A chore as the API returns it.",
+        "required": [
+          "id",
+          "name",
+          "recurrenceUnit",
+          "recurrenceEvery",
+          "weight",
+          "isActive",
+          "participantIds",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Identifier of the chore."
+          },
+          "name": {
+            "type": "string"
+          },
+          "recurrenceUnit": {
+            "type": "string",
+            "description": "`Day`, `Week` or `Month`."
+          },
+          "recurrenceEvery": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "weight": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "participantIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       }
     }
   },
