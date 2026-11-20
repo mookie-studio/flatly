@@ -78,3 +78,17 @@ describe('routing', () => {
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
 })
+
+describe('invite links', () => {
+  it('keeps the invite code through sign-in so the join happens after login', async () => {
+    const router = renderAt('/join?code=ABCD2345', { status: 'anonymous' })
+
+    await screen.findByRole('heading', { name: 'Log in' })
+    const redirect = new URLSearchParams(router.state.location.search).get('redirect')
+    expect(redirect).toBe('/join?code=ABCD2345')
+
+    const googleLink = screen.getByRole('link', { name: /google/i })
+    const returnUrl = new URL(googleLink.getAttribute('href') ?? '').searchParams.get('returnUrl')
+    expect(returnUrl).toBe('/join?code=ABCD2345')
+  })
+})

@@ -1,0 +1,28 @@
+{
+  "title": "Unirse a un piso",
+  "intro": "Introduce el código de invitación que te ha compartido alguien de tu piso.",
+  "codeLabel": "Código de invitación",
+  "codePlaceholder": "Por ejemplo, ABCD2345",
+  "submit": "Unirme al piso",
+  "submitting": "Uniéndote…",
+  "joining": "Uniéndote a tu piso…",
+  "back": "Atrás",
+  "errors": {
+    "notFound": {
+      "title": "No encontramos ningún piso con este código de invitación.",
+      "hint": "Revisa el código por si hay alguna errata, o pide a alguien del piso uno nuevo."
+    },
+    "expired": {
+      "title": "Este código de invitación ha caducado.",
+      "hint": "Pide a un administrador del piso un código de invitación nuevo."
+    },
+    "throttled": {
+      "title": "Demasiados intentos en poco tiempo.",
+      "hint": "Espera unos minutos y vuelve a intentarlo."
+    },
+    "generic": {
+      "title": "No pudimos unirte al piso.",
+      "hint": "Revisa tu conexión e inténtalo de nuevo."
+    }
+  }
+}

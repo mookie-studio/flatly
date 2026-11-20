@@ -5,11 +5,13 @@ import { initReactI18next } from 'react-i18next'
 import enAuth from './locales/en/auth.json'
 import enCommon from './locales/en/common.json'
 import enHome from './locales/en/home.json'
+import enJoin from './locales/en/join.json'
 import enNotFound from './locales/en/notFound.json'
 import enOnboarding from './locales/en/onboarding.json'
 import esAuth from './locales/es/auth.json'
 import esCommon from './locales/es/common.json'
 import esHome from './locales/es/home.json'
+import esJoin from './locales/es/join.json'
 import esNotFound from './locales/es/notFound.json'
 import esOnboarding from './locales/es/onboarding.json'
 import enShell from './locales/en/shell.json'
@@ -27,6 +29,7 @@ export const resources = {
     common: esCommon,
     auth: esAuth,
     home: esHome,
+    join: esJoin,
     notFound: esNotFound,
     onboarding: esOnboarding,
     shell: esShell,
@@ -35,6 +38,7 @@ export const resources = {
     common: enCommon,
     auth: enAuth,
     home: enHome,
+    join: enJoin,
     notFound: enNotFound,
     onboarding: enOnboarding,
     shell: enShell,
@@ -53,7 +57,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    ns: ['common', 'auth', 'home', 'notFound', 'onboarding', 'shell'],
+    ns: ['common', 'auth', 'home', 'join', 'notFound', 'onboarding', 'shell'],
     defaultNS,
     supportedLngs: SUPPORTED_LANGUAGES,
     nonExplicitSupportedLngs: true,

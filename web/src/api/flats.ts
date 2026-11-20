@@ -89,3 +89,17 @@ export const useRemoveMember = (flatId: string) => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: flatMembersKey(flatId) }),
   })
 }
+
+/**
+ * Joins the flat that has the given invite code, as a Member. Joining again while already a member
+ * returns the flat and changes nothing. Unknown codes answer 404, expired codes 410 and throttled
+ * attempts 429.
+ */
+export const useJoinFlat = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (code: string) => unwrap(api.POST('/api/v1/flats/join', { body: { code } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: flatsKey }),
+  })
+}

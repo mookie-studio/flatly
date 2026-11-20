@@ -3,8 +3,7 @@
     "title": "Welcome to Flatly",
     "intro": "Start a flat for the people you share it with, or join one that already exists.",
     "create": "Create a flat",
-    "join": "Join a flat",
-    "joinUnavailable": "Joining with an invitation code is coming soon."
+    "join": "Join a flat"
   },
   "create": {
     "title": "Create your flat",
