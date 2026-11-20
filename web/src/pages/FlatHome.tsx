@@ -12,6 +12,7 @@ import {
 } from '@/api/flats'
 import { isApiError } from '@/api/errors'
 import { useSession } from '@/auth/use-session'
+import { InviteSharePanel } from '@/components/flat/InviteSharePanel'
 import { flatModuleLinks } from '@/components/layout/navigation'
 import { rememberLastFlatId } from '@/lib/last-flat'
 
@@ -155,6 +156,8 @@ export function FlatHome() {
           })}
         </ul>
       </section>
+
+      {isAdmin && <InviteSharePanel flatId={flatId} />}
 
       {callerId && (
         <section aria-label={t('leave.action')} className="flex flex-col gap-3">

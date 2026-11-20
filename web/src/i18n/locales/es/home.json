@@ -24,5 +24,24 @@
   "leave": {
     "action": "Salir del piso",
     "confirm": "¿Seguro que quieres salir de este piso? Perderás el acceso a él."
+  },
+  "invite": {
+    "heading": "Invitar a personas",
+    "intro": "Comparte este código o enlace con las personas que deben unirse al piso.",
+    "loading": "Cargando el código de invitación…",
+    "codeLabel": "Código de invitación",
+    "expires": "Válido hasta el {{date}}.",
+    "copy": "Copiar enlace",
+    "copied": "Enlace copiado.",
+    "copyFailed": "No pudimos copiar el enlace. Selecciónalo y cópialo a mano.",
+    "share": "Compartir",
+    "whatsapp": "Compartir por WhatsApp",
+    "whatsappMessage": "Únete a nuestro piso en Flatly: {{link}}",
+    "shareTitle": "Únete a nuestro piso en Flatly",
+    "regenerate": "Crear un código nuevo",
+    "confirmRegenerate": "El código y el enlace actuales dejarán de funcionar.",
+    "confirm": "Crear código nuevo",
+    "cancel": "Cancelar",
+    "error": "No pudimos cargar ni cambiar el código de invitación. Inténtalo de nuevo."
   }
 }

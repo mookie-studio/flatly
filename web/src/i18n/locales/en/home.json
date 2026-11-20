@@ -24,5 +24,24 @@
   "leave": {
     "action": "Leave flat",
     "confirm": "Leave this flat? You will lose access to it."
+  },
+  "invite": {
+    "heading": "Invite members",
+    "intro": "Share this code or link with people who should join the flat.",
+    "loading": "Loading the invite code…",
+    "codeLabel": "Invite code",
+    "expires": "Valid until {{date}}.",
+    "copy": "Copy link",
+    "copied": "Link copied.",
+    "copyFailed": "We could not copy the link. Select it and copy it by hand.",
+    "share": "Share",
+    "whatsapp": "Share on WhatsApp",
+    "whatsappMessage": "Join our flat on Flatly: {{link}}",
+    "shareTitle": "Join our flat on Flatly",
+    "regenerate": "Create a new code",
+    "confirmRegenerate": "The current code and link will stop working.",
+    "confirm": "Create new code",
+    "cancel": "Cancel",
+    "error": "We could not load or change the invite code. Try again."
   }
 }
