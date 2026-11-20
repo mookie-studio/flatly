@@ -68,9 +68,44 @@ function renderFlat(path: string) {
   )
 }
 
+const inviteUrl = `${config.apiUrl}/api/v1/flats/:flatId/invite-code`
+
 describe('flat home', () => {
   beforeEach(() => {
     window.localStorage.clear()
+    server.use(
+      http.get(inviteUrl, () =>
+        HttpResponse.json({ code: 'ABCD2345', expiresAt: '2026-11-27T00:00:00Z' }),
+      ),
+    )
+  })
+
+  it('offers invite sharing to admins only', async () => {
+    server.use(
+      sessionHandler(),
+      flatAs('Admin'),
+      http.get(membersUrl, () => HttpResponse.json(members)),
+    )
+    renderFlat('/f/f1')
+    expect(await screen.findByRole('heading', { name: 'Invite members' })).toBeInTheDocument()
+    expect(await screen.findByText('ABCD2345')).toBeInTheDocument()
+  })
+
+  it('keeps the invite code from members who are not admins', async () => {
+    let requested = false
+    server.use(
+      sessionHandler(),
+      flatAs('Member'),
+      http.get(membersUrl, () => HttpResponse.json(members)),
+      http.get(inviteUrl, () => {
+        requested = true
+        return HttpResponse.json({ code: 'ABCD2345', expiresAt: '2026-11-27T00:00:00Z' })
+      }),
+    )
+    renderFlat('/f/f1')
+    expect(await screen.findByRole('heading', { name: 'Calle Mayor 12' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Invite members' })).not.toBeInTheDocument()
+    expect(requested).toBe(false)
   })
 
   it('shows the flat name and its active members with their roles', async () => {

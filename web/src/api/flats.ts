@@ -103,3 +103,31 @@ export const useJoinFlat = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: flatsKey }),
   })
 }
+
+export type InviteCode = components['schemas']['InviteCodeResponse']
+
+export const flatInviteCodeKey = (flatId: string) => ['flats', flatId, 'invite-code'] as const
+
+/** The invite code of a flat and when it stops working. Only an admin may read it, so pass `enabled` for admins only. */
+export const useFlatInviteCode = (flatId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: flatInviteCodeKey(flatId),
+    queryFn: () =>
+      unwrap(api.GET('/api/v1/flats/{flatId}/invite-code', { params: { path: { flatId } } })),
+    enabled,
+  })
+
+/** Replaces the invite code. The previous code stops working, so the new one replaces it in the cache. */
+export const useRegenerateFlatInviteCode = (flatId: string) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.POST('/api/v1/flats/{flatId}/invite-code/regenerate', {
+          params: { path: { flatId } },
+        }),
+      ),
+    onSuccess: (code) => queryClient.setQueryData(flatInviteCodeKey(flatId), code),
+  })
+}
