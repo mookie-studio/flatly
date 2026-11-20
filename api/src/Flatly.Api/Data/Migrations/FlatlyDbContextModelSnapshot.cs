@@ -29,6 +29,11 @@ namespace Flatly.Api.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("CatalogueKey")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("catalogue_key");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("created_at");
@@ -63,6 +68,11 @@ namespace Flatly.Api.Data.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_chores");
+
+                    b.HasIndex("FlatId", "CatalogueKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_chores_flat_catalogue_key")
+                        .HasFilter("catalogue_key is not null");
 
                     b.HasIndex("FlatId", "IsActive")
                         .HasDatabaseName("ix_chores_flat_id_is_active");

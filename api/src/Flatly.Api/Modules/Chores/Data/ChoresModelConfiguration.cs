@@ -21,6 +21,12 @@ public static class ChoresModelConfiguration
             chore.Property(c => c.Weight).IsRequired();
             chore.Property(c => c.IsActive).IsRequired();
             chore.Property(c => c.CreatedAt).IsRequired();
+            chore.Property(c => c.CatalogueKey).HasMaxLength(32);
+            // A flat holds one chore per predefined key. Custom chores (null key) do not take part in the check.
+            chore.HasIndex(c => new { c.FlatId, c.CatalogueKey })
+                .IsUnique()
+                .HasFilter("catalogue_key is not null")
+                .HasDatabaseName("ux_chores_flat_catalogue_key");
             chore.HasOne<Flat>()
                 .WithMany()
                 .HasForeignKey(c => c.FlatId)

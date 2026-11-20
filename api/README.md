@@ -78,7 +78,7 @@ The connection string is `ConnectionStrings:flatly`. Aspire injects it from the 
 
 - Migrations are additive only, so the previous version keeps working on the new schema (see [ADR-001](../docs/adr/0001-stack-and-deployment.md)).
 
-The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). `AddNotifications` creates `notifications` (one row per recipient). `AddChores` creates `chores` and `chore_participants`. The feature tasks add their entities and their migrations.
+The migration `Initial` is empty. `AddIdentity` creates the account tables: `users` (with the profile fields `display_name`, `avatar_url`, `preferred_language` and `time_zone_id`), `user_logins` (one row per linked Google or Microsoft account), `user_claims` and `user_tokens`. `AddFlats` creates `flats` and `memberships` (one row per member and flat, with `left_at` set when a member leaves). `AddNotifications` creates `notifications` (one row per recipient). `AddChores` creates `chores` and `chore_participants`. `AddChoreCatalogueKey` adds the nullable `catalogue_key` column and its unique index per flat. The feature tasks add their entities and their migrations.
 
 ### Flats and memberships
 
@@ -126,6 +126,8 @@ The endpoints sit under the flat route (`MapFlatScope`), so a non-member gets 40
 - `GET /api/v1/chores/{flatId}` lists the active chores by name. `?includeInactive=true` adds the deactivated ones.
 - `POST /api/v1/chores/{flatId}` creates a chore. Every field is required.
 - `PATCH /api/v1/chores/{flatId}/{choreId}` changes only the fields sent. Sending `participantIds` replaces the whole set; `isActive: false` deactivates the chore.
+- `GET /api/v1/chores/catalogue?lang=es|en` lists the predefined chores (#90) with their default recurrence and weight. Without `lang`, the caller's preferred language is used. The catalogue is the same for every flat.
+- `POST /api/v1/chores/{flatId}/from-catalogue` adds predefined chores by key, as normal editable chores named in the caller's language. Participants default to every active member. A key the flat already has, active or deactivated, is skipped and reported in `skipped`, so the same predefined chore is never duplicated (a unique index on `(flat_id, catalogue_key)` enforces it).
 
 Every member may create and edit chores. Turn generation is a separate task, and `WeightedRotation` (`Modules/Chores/Rotation`) is the pure rotation algorithm it will use.
 

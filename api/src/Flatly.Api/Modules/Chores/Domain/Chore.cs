@@ -33,6 +33,12 @@ public sealed class Chore : IFlatScoped
     /// <summary>When the chore was created, in UTC.</summary>
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>
+    /// The predefined chore this one was created from (#90), or null for a custom chore. A flat has at most one chore
+    /// per key, so the same predefined chore is not added twice.
+    /// </summary>
+    public string? CatalogueKey { get; set; }
+
     /// <summary>The members who take part in the rotation of this chore.</summary>
     public List<ChoreParticipant> Participants { get; set; } = [];
 }

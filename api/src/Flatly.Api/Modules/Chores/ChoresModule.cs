@@ -15,6 +15,7 @@ public static class ChoresModule
     {
         services.AddSingleton<IRequestValidator<CreateChoreRequest>, CreateChoreRequestValidator>();
         services.AddSingleton<IRequestValidator<UpdateChoreRequest>, UpdateChoreRequestValidator>();
+        services.AddSingleton<IRequestValidator<AddFromCatalogueRequest>, AddFromCatalogueRequestValidator>();
         return services;
     }
 
@@ -23,9 +24,11 @@ public static class ChoresModule
     {
         app.MapGroup(RoutePrefix)
             .WithTags("Chores")
+            .MapListCatalogue()
             .MapListChores()
             .MapCreateChore()
-            .MapUpdateChore();
+            .MapUpdateChore()
+            .MapAddFromCatalogue();
         return app;
     }
 }
